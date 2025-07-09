@@ -13,22 +13,22 @@ export default function EvaluationRadarChart({ scores, className = '' }: RadarCh
     {
       subject: '音程',
       score: scores.pitch,
-      fullMark: 100,
+      fullMark: 10,
     },
     {
       subject: 'リズム',
       score: scores.rhythm,
-      fullMark: 100,
+      fullMark: 10,
     },
     {
       subject: '表現',
       score: scores.expression,
-      fullMark: 100,
+      fullMark: 10,
     },
     {
       subject: 'テクニック',
       score: scores.technique,
-      fullMark: 100,
+      fullMark: 10,
     },
   ]
 
@@ -44,7 +44,7 @@ export default function EvaluationRadarChart({ scores, className = '' }: RadarCh
           />
           <PolarRadiusAxis 
             angle={90} 
-            domain={[0, 100]}
+            domain={[0, 10]}
             tick={{ fontSize: 10, fill: '#9CA3AF' }}
             tickCount={6}
           />

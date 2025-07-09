@@ -15,10 +15,10 @@ const mockInstructors: Instructor[] = [
 
 export default function Home() {
   const [scores, setScores] = useState<EvaluationScore>({
-    pitch: 70,
-    rhythm: 60,
-    expression: 80,
-    technique: 65,
+    pitch: 7,
+    rhythm: 6,
+    expression: 8,
+    technique: 6,
   })
   const [selectedInstructor, setSelectedInstructor] = useState<InstructorSession | null>(null)
 

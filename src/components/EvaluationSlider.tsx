@@ -56,24 +56,25 @@ export default function EvaluationSlider({
               type="range"
               id={key}
               min="0"
-              max="100"
+              max="10"
               value={scores[key]}
               onChange={(e) => handleScoreChange(key, parseInt(e.target.value))}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
               style={{
-                background: `linear-gradient(to right, ${color.replace('bg-', '').replace('-500', '')} 0%, ${color.replace('bg-', '').replace('-500', '')} ${scores[key]}%, #e5e7eb ${scores[key]}%, #e5e7eb 100%)`
+                background: `linear-gradient(to right, ${color.replace('bg-', '').replace('-500', '')} 0%, ${color.replace('bg-', '').replace('-500', '')} ${scores[key] * 10}%, #e5e7eb ${scores[key] * 10}%, #e5e7eb 100%)`
               }}
               aria-label={`${label}の評価`}
               aria-valuemin={0}
-              aria-valuemax={100}
+              aria-valuemax={10}
               aria-valuenow={scores[key]}
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>0</span>
-              <span>25</span>
-              <span>50</span>
-              <span>75</span>
-              <span>100</span>
+              <span>2</span>
+              <span>4</span>
+              <span>6</span>
+              <span>8</span>
+              <span>10</span>
             </div>
           </div>
         </div>

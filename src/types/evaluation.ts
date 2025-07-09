@@ -1,8 +1,8 @@
 export interface EvaluationScore {
-  pitch: number      // 音程 (0-100)
-  rhythm: number     // リズム (0-100)
-  expression: number // 表現 (0-100)
-  technique: number  // テクニック (0-100)
+  pitch: number      // 音程 (0-10)
+  rhythm: number     // リズム (0-10)
+  expression: number // 表現 (0-10)
+  technique: number  // テクニック (0-10)
 }
 
 export interface Evaluation {
