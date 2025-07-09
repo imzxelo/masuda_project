@@ -8,7 +8,7 @@ export interface Student {
   updatedAt: string
 }
 
-export interface StudentWithStats extends Student {
+export interface StudentStats {
   totalEvaluations: number
   averageScores: {
     pitch: number
@@ -18,4 +18,8 @@ export interface StudentWithStats extends Student {
   }
   lastEvaluationDate?: string
   improvementTrend?: 'improving' | 'declining' | 'stable'
+}
+
+export interface StudentWithStats extends Student {
+  stats?: StudentStats
 }

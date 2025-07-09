@@ -1,7 +1,8 @@
 export interface ApiResponse<T> {
-  data: T
+  data?: T
   success: boolean
   error?: string
+  message?: string
 }
 
 export interface ApiError {
@@ -21,18 +22,31 @@ export interface PaginatedResponse<T> {
 }
 
 export interface N8nWebhookPayload {
-  evaluation: {
-    id: string
-    studentName: string
-    instructorName: string
+  type: string
+  timestamp: string
+  data: {
+    evaluationId: string
+    studentId: string
+    instructorId: string
     scores: {
       pitch: number
       rhythm: number
       expression: number
       technique: number
     }
-    comments?: string
-    evaluatedAt: string
+    comments: {
+      pitch: string
+      rhythm: string
+      expression: string
+      technique: string
+    }
+    generalComments?: string
+    createdAt: string
+    metadata?: {
+      totalScore: number
+      maxScore: number
+      retryCount?: number
+    }
   }
 }
 
