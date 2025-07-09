@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: "Singer's Challenge",
+  title: 'Singer\'s Challenge',
   description: 'ボーカルスクール向けの採点・フィードバックシステム',
 }
 
