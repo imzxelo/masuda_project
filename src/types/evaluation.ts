@@ -29,3 +29,18 @@ export interface EvaluationSummary {
   averageScores: EvaluationScore
   lastEvaluationDate?: string
 }
+
+export interface EvaluationFormData {
+  studentId: string
+  scores: EvaluationScore
+  comments?: string
+}
+
+export interface EvaluationFilters {
+  studentId?: string
+  instructorId?: string
+  dateFrom?: string
+  dateTo?: string
+}
+
+export type EvaluationStatus = 'draft' | 'completed' | 'sent' | 'error'

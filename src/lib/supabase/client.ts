@@ -1,29 +1,45 @@
 import { createClient } from '@supabase/supabase-js'
+import { validateEnvironmentVariables } from '../env'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const env = validateEnvironmentVariables()
+export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey)
 
-if (!supabaseUrl) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
-}
-
-if (!supabaseAnonKey) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-export const testSupabaseConnection = async (): Promise<boolean> => {
+export const testSupabaseConnection = async (): Promise<{
+  success: boolean
+  message: string
+}> => {
   try {
-    const { data, error } = await supabase.from('test').select('*').limit(1)
+    const { data, error } = await supabase
+      .from('evaluations')
+      .select('id')
+      .limit(1)
+    
     if (error && error.code !== 'PGRST116') {
-      console.error('Supabase connection test failed:', error)
-      return false
+      return {
+        success: false,
+        message: `Supabase connection failed: ${error.message}`
+      }
     }
-    console.log('Supabase connection successful')
-    return true
+    
+    return {
+      success: true,
+      message: 'Supabase connection successful'
+    }
   } catch (error) {
-    console.error('Supabase connection test failed:', error)
-    return false
+    return {
+      success: false,
+      message: `Supabase connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    }
+  }
+}
+
+export const getSupabaseStatus = async () => {
+  const connectionTest = await testSupabaseConnection()
+  
+  return {
+    url: env.supabaseUrl,
+    connected: connectionTest.success,
+    message: connectionTest.message,
+    timestamp: new Date().toISOString()
   }
 }
