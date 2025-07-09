@@ -5,12 +5,20 @@ export interface EvaluationScore {
   technique: number  // テクニック (0-10)
 }
 
+export interface EvaluationComments {
+  pitch: string      // 音程のコメント
+  rhythm: string     // リズムのコメント
+  expression: string // 表現のコメント
+  technique: string  // テクニックのコメント
+}
+
 export interface Evaluation {
   id: string
   studentId: string
   instructorId: string
   scores: EvaluationScore
-  comments?: string
+  comments: EvaluationComments
+  generalComments?: string
   createdAt: string
   updatedAt: string
   sentToN8n: boolean
@@ -21,7 +29,8 @@ export interface EvaluationInput {
   studentId: string
   instructorId: string
   scores: EvaluationScore
-  comments?: string
+  comments: EvaluationComments
+  generalComments?: string
 }
 
 export interface EvaluationSummary {
@@ -33,7 +42,8 @@ export interface EvaluationSummary {
 export interface EvaluationFormData {
   studentId: string
   scores: EvaluationScore
-  comments?: string
+  comments: EvaluationComments
+  generalComments?: string
 }
 
 export interface EvaluationFilters {

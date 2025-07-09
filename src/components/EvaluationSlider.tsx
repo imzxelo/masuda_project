@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { EvaluationScore } from '@/types/evaluation'
+import { EvaluationScore, EvaluationComments } from '@/types/evaluation'
 
 interface EvaluationSliderProps {
   initialScores?: EvaluationScore
-  onChange: (scores: EvaluationScore) => void
+  initialComments?: EvaluationComments
+  onChange: (scores: EvaluationScore, comments: EvaluationComments) => void
   className?: string
 }
 
@@ -14,6 +15,13 @@ const defaultScores: EvaluationScore = {
   rhythm: 0,
   expression: 0,
   technique: 0,
+}
+
+const defaultComments: EvaluationComments = {
+  pitch: '',
+  rhythm: '',
+  expression: '',
+  technique: '',
 }
 
 const evaluationItems = [
@@ -25,21 +33,29 @@ const evaluationItems = [
 
 export default function EvaluationSlider({ 
   initialScores = defaultScores, 
+  initialComments = defaultComments,
   onChange, 
   className = '' 
 }: EvaluationSliderProps) {
   const [scores, setScores] = useState<EvaluationScore>(initialScores)
+  const [comments, setComments] = useState<EvaluationComments>(initialComments)
 
   const handleScoreChange = useCallback((key: keyof EvaluationScore, value: number) => {
     const newScores = { ...scores, [key]: value }
     setScores(newScores)
-    onChange(newScores)
-  }, [scores, onChange])
+    onChange(newScores, comments)
+  }, [scores, comments, onChange])
+
+  const handleCommentChange = useCallback((key: keyof EvaluationComments, value: string) => {
+    const newComments = { ...comments, [key]: value }
+    setComments(newComments)
+    onChange(scores, newComments)
+  }, [scores, comments, onChange])
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-8 ${className}`}>
       {evaluationItems.map(({ key, label, color }) => (
-        <div key={key} className="space-y-2">
+        <div key={key} className="space-y-3">
           <div className="flex items-center justify-between">
             <label 
               htmlFor={key} 
@@ -76,6 +92,23 @@ export default function EvaluationSlider({
               <span>8</span>
               <span>10</span>
             </div>
+          </div>
+          <div className="mt-3">
+            <label 
+              htmlFor={`${key}-comment`} 
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {label}のコメント
+            </label>
+            <textarea
+              id={`${key}-comment`}
+              value={comments[key]}
+              onChange={(e) => handleCommentChange(key, e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              rows={2}
+              placeholder={`${label}について具体的なコメントを記入してください...`}
+              aria-label={`${label}のコメント`}
+            />
           </div>
         </div>
       ))}

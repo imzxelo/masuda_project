@@ -5,7 +5,7 @@ import EvaluationRadarChart from '@/components/RadarChart'
 import EvaluationSlider from '@/components/EvaluationSlider'
 import InstructorSelect from '@/components/InstructorSelect'
 import { Card, Button } from '@/components/ui'
-import { EvaluationScore, Instructor, InstructorSession } from '@/types'
+import { EvaluationScore, EvaluationComments, Instructor, InstructorSession } from '@/types'
 
 const mockInstructors: Instructor[] = [
   { id: '1', name: '田中 太郎', email: 'tanaka@example.com', isActive: true, createdAt: '2023-01-01', updatedAt: '2023-01-01' },
@@ -20,10 +20,17 @@ export default function Home() {
     expression: 8,
     technique: 6,
   })
+  const [comments, setComments] = useState<EvaluationComments>({
+    pitch: '',
+    rhythm: '',
+    expression: '',
+    technique: '',
+  })
   const [selectedInstructor, setSelectedInstructor] = useState<InstructorSession | null>(null)
 
-  const handleScoreChange = (newScores: EvaluationScore) => {
+  const handleEvaluationChange = (newScores: EvaluationScore, newComments: EvaluationComments) => {
     setScores(newScores)
+    setComments(newComments)
   }
 
   const handleInstructorSelect = (session: InstructorSession) => {
@@ -69,37 +76,68 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             <Card>
               <h2 className="text-xl font-semibold mb-4">評価入力</h2>
               <EvaluationSlider
                 initialScores={scores}
-                onChange={handleScoreChange}
+                initialComments={comments}
+                onChange={handleEvaluationChange}
               />
             </Card>
 
-            <Card>
-              <h2 className="text-xl font-semibold mb-4">評価結果</h2>
-              <EvaluationRadarChart scores={scores} />
-              <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                <div className="flex justify-between">
-                  <span>音程:</span>
-                  <span className="font-semibold">{scores.pitch}点</span>
+            <div className="space-y-6">
+              <Card>
+                <h2 className="text-xl font-semibold mb-4">評価結果</h2>
+                <EvaluationRadarChart scores={scores} />
+                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex justify-between">
+                    <span>音程:</span>
+                    <span className="font-semibold">{scores.pitch}点</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>リズム:</span>
+                    <span className="font-semibold">{scores.rhythm}点</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>表現:</span>
+                    <span className="font-semibold">{scores.expression}点</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>テクニック:</span>
+                    <span className="font-semibold">{scores.technique}点</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>リズム:</span>
-                  <span className="font-semibold">{scores.rhythm}点</span>
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="text-sm font-semibold text-gray-700 mb-2">
+                    合計: {scores.pitch + scores.rhythm + scores.expression + scores.technique}点 / 40点
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>表現:</span>
-                  <span className="font-semibold">{scores.expression}点</span>
+              </Card>
+
+              <Card>
+                <h2 className="text-xl font-semibold mb-4">コメント一覧</h2>
+                <div className="space-y-4">
+                  {Object.entries(comments).map(([key, comment]) => {
+                    const labels = {
+                      pitch: '音程',
+                      rhythm: 'リズム',
+                      expression: '表現',
+                      technique: 'テクニック'
+                    }
+                    const label = labels[key as keyof typeof labels]
+                    return (
+                      <div key={key} className="border-b border-gray-100 pb-3 last:border-b-0">
+                        <div className="text-sm font-medium text-gray-700 mb-1">{label}</div>
+                        <div className="text-sm text-gray-600">
+                          {comment || <span className="text-gray-400">未入力</span>}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-                <div className="flex justify-between">
-                  <span>テクニック:</span>
-                  <span className="font-semibold">{scores.technique}点</span>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
           </div>
 
           <div className="mt-8 text-center">
