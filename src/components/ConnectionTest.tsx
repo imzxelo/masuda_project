@@ -21,13 +21,19 @@ export default function ConnectionTest() {
   }>({})
 
   const testSupabaseConnection = async () => {
+    console.log('Starting Supabase connection test...')
     setStatus(prev => ({ ...prev, supabase: 'testing' }))
     
     try {
+      console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+      console.log('Supabase client:', supabase)
+      
       const { data, error } = await supabase
         .from('instructors')
         .select('count')
         .limit(1)
+
+      console.log('Supabase response:', { data, error })
 
       if (error) {
         throw error
@@ -39,6 +45,7 @@ export default function ConnectionTest() {
         supabase: 'Supabase接続成功！講師テーブルにアクセスできました。' 
       }))
     } catch (error) {
+      console.error('Supabase connection error:', error)
       setStatus(prev => ({ ...prev, supabase: 'error' }))
       setResults(prev => ({ 
         ...prev, 
@@ -48,10 +55,14 @@ export default function ConnectionTest() {
   }
 
   const testWebhookConn = async () => {
+    console.log('Starting webhook connection test...')
     setStatus(prev => ({ ...prev, webhook: 'testing' }))
     
     try {
+      console.log('Webhook URL:', process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL)
+      
       const webhookStatus = await getWebhookStatus()
+      console.log('Webhook status:', webhookStatus)
       
       if (!webhookStatus.configured) {
         setStatus(prev => ({ ...prev, webhook: 'error' }))
@@ -63,6 +74,7 @@ export default function ConnectionTest() {
       }
 
       const result = await testWebhookConnection()
+      console.log('Webhook test result:', result)
       
       if (result.success) {
         setStatus(prev => ({ ...prev, webhook: 'success' }))
@@ -74,6 +86,7 @@ export default function ConnectionTest() {
         throw new Error(result.error)
       }
     } catch (error) {
+      console.error('Webhook connection error:', error)
       setStatus(prev => ({ ...prev, webhook: 'error' }))
       setResults(prev => ({ 
         ...prev, 
@@ -125,7 +138,10 @@ export default function ConnectionTest() {
           </div>
           <Button
             size="sm"
-            onClick={testSupabaseConnection}
+            onClick={() => {
+              console.log('Supabase test button clicked')
+              testSupabaseConnection()
+            }}
             disabled={status.supabase === 'testing'}
           >
             テスト
@@ -145,7 +161,10 @@ export default function ConnectionTest() {
           </div>
           <Button
             size="sm"
-            onClick={testWebhookConn}
+            onClick={() => {
+              console.log('Webhook test button clicked')
+              testWebhookConn()
+            }}
             disabled={status.webhook === 'testing'}
           >
             テスト
@@ -160,7 +179,10 @@ export default function ConnectionTest() {
 
         <div className="pt-4 border-t">
           <Button
-            onClick={testAllConnections}
+            onClick={() => {
+              console.log('Test all button clicked')
+              testAllConnections()
+            }}
             disabled={status.supabase === 'testing' || status.webhook === 'testing'}
             className="w-full"
           >

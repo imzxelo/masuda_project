@@ -35,12 +35,27 @@ export default function TestPage() {
                   <div className="ml-4 space-y-1 font-mono text-xs">
                     <div>
                       NEXT_PUBLIC_SUPABASE_URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ? '✓ 設定済み' : '✗ 未設定'}
+                      {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+                        <div className="text-gray-600 mt-1">
+                          {process.env.NEXT_PUBLIC_SUPABASE_URL.substring(0, 50)}...
+                        </div>
+                      )}
                     </div>
                     <div>
                       NEXT_PUBLIC_SUPABASE_ANON_KEY: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✓ 設定済み' : '✗ 未設定'}
+                      {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && (
+                        <div className="text-gray-600 mt-1">
+                          {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.substring(0, 30)}...
+                        </div>
+                      )}
                     </div>
                     <div>
                       NEXT_PUBLIC_N8N_WEBHOOK_URL: {process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL ? '✓ 設定済み' : '✗ 未設定'}
+                      {process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL && (
+                        <div className="text-gray-600 mt-1">
+                          {process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL.substring(0, 50)}...
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
