@@ -35,10 +35,24 @@ cp .env.local.example .env.local
 ```
 
 3. `.env.local` ファイルを編集し、必要な環境変数を設定
+```bash
+# Supabase設定（必須）
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# n8n Webhook設定（オプション）
+NEXT_PUBLIC_N8N_WEBHOOK_URL=your_n8n_webhook_url
+```
 
 4. 開発サーバーを起動
 ```bash
 npm run dev
+```
+
+5. 接続テストを実行
+```bash
+# ブラウザで以下にアクセス
+http://localhost:3000/test
 ```
 
 ## 環境変数
@@ -78,6 +92,25 @@ src/
 - 📱 レスポンシブデザイン
 - 👥 10名講師の認証・選択システム
 
+## 🚀 現在の実装状況
+
+### ✅ 完了済み (Phase 1-3)
+- **基盤構築**: プロジェクト構造、設定ファイル、型定義
+- **コアコンポーネント**: レーダーチャート、評価スライダー、講師認証、共通UI
+- **状態管理**: Zustand stores (評価、講師、UI状態)
+- **API連携**: Supabase CRUD操作、n8n webhook送信
+- **環境構築**: 開発環境、接続テスト、デバッグ機能
+
+### 🔄 進行中 (Phase 4準備)
+- **メインページ統合**: 実際のAPI連携でのデモ動作確認
+- **接続テスト**: Supabase ✅、n8n Webhook ✅
+
+### 📋 次のステップ (Phase 4以降)
+- **生徒選択機能**: 実際の生徒データベースからの選択
+- **評価履歴表示**: 過去の評価データの表示
+- **レポート確認**: n8nからのレポート生成結果確認
+- **エラーハンドリング強化**: 本番環境対応
+
 ## 評価システム詳細
 
 ### 評価項目とコメント機能
@@ -98,3 +131,18 @@ src/
    - 4項目の合計評価（最大40点/講師）
    - 10名講師による総合評価（最大400点）
    - リアルタイムでの評価結果可視化
+
+## 🔧 開発・デバッグ
+
+### 接続テスト
+システムの接続状況を確認:
+```bash
+# 開発サーバー起動後
+http://localhost:3000/test
+```
+
+### 主要なエンドポイント
+- **メインページ**: `http://localhost:3000/` - 評価システムのメイン画面
+- **テストページ**: `http://localhost:3000/test` - 接続テストとデバッグ
+- **Supabase**: 講師・生徒・評価データの管理
+- **n8n Webhook**: 自動レポート生成トリガー
