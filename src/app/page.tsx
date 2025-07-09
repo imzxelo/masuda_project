@@ -1,80 +1,113 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import EvaluationRadarChart from '@/components/RadarChart'
 import EvaluationSlider from '@/components/EvaluationSlider'
 import InstructorSelect from '@/components/InstructorSelect'
-import { Card, Button } from '@/components/ui'
-import { EvaluationScore, EvaluationComments, Instructor, InstructorSession } from '@/types'
-
-const mockInstructors: Instructor[] = [
-  { id: '1', name: '田中 太郎', email: 'tanaka@example.com', isActive: true, createdAt: '2023-01-01', updatedAt: '2023-01-01' },
-  { id: '2', name: '佐藤 花子', email: 'sato@example.com', isActive: true, createdAt: '2023-01-01', updatedAt: '2023-01-01' },
-  { id: '3', name: '鈴木 次郎', email: 'suzuki@example.com', isActive: true, createdAt: '2023-01-01', updatedAt: '2023-01-01' },
-]
+import { Card, Button, LoadingSpinner } from '@/components/ui'
+import { ToastProvider } from '@/components/ui/ToastProvider'
+import { EvaluationScore, EvaluationComments, InstructorSession } from '@/types'
+import { useInstructor, useEvaluation } from '@/hooks'
+import { useEvaluationStore } from '@/stores'
 
 export default function Home() {
-  const [scores, setScores] = useState<EvaluationScore>({
-    pitch: 7,
-    rhythm: 6,
-    expression: 8,
-    technique: 6,
-  })
-  const [comments, setComments] = useState<EvaluationComments>({
-    pitch: '',
-    rhythm: '',
-    expression: '',
-    technique: '',
-  })
-  const [selectedInstructor, setSelectedInstructor] = useState<InstructorSession | null>(null)
+  // Hooks
+  const { 
+    instructors, 
+    session, 
+    isAuthenticated, 
+    isLoading: instructorLoading, 
+    authenticate, 
+    logout 
+  } = useInstructor()
+  
+  const { submitEvaluation } = useEvaluation()
+  
+  const { 
+    scores, 
+    comments, 
+    updateScores, 
+    updateComments, 
+    setStudentId,
+    isSubmitting 
+  } = useEvaluationStore()
+
+  useEffect(() => {
+    updateScores({ pitch: 7, rhythm: 6, expression: 8, technique: 6 })
+    setStudentId('demo-student-id') // TODO: 実際の生徒選択機能
+  }, [updateScores, setStudentId])
 
   const handleEvaluationChange = (newScores: EvaluationScore, newComments: EvaluationComments) => {
-    setScores(newScores)
-    setComments(newComments)
+    updateScores(newScores)
+    updateComments(newComments)
   }
 
-  const handleInstructorSelect = (session: InstructorSession) => {
-    setSelectedInstructor(session)
+  const handleInstructorSelect = async (instructor: any) => {
+    await authenticate(instructor)
   }
 
-  if (!selectedInstructor) {
+  const handleLogout = () => {
+    logout()
+  }
+
+  const handleSubmitEvaluation = async () => {
+    if (!session) return
+    
+    const success = await submitEvaluation(session.instructorId)
+    if (success) {
+      // 評価がリセットされ、成功メッセージが表示される
+    }
+  }
+
+  if (!isAuthenticated) {
     return (
-      <main className="min-h-screen bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
-            <h1 className="text-3xl font-bold text-center mb-8">
-              Singer's Challenge
-            </h1>
-            <p className="text-center text-gray-600 mb-8">
-              ボーカルスクール向けの採点・フィードバックシステム
-            </p>
-            <InstructorSelect 
-              instructors={mockInstructors}
-              onSelect={handleInstructorSelect}
-            />
+      <ToastProvider>
+        <main className="min-h-screen bg-gray-50 py-12">
+          <div className="container mx-auto px-4">
+            <div className="max-w-2xl mx-auto">
+              <h1 className="text-3xl font-bold text-center mb-8">
+                Singer's Challenge
+              </h1>
+              <p className="text-center text-gray-600 mb-8">
+                ボーカルスクール向けの採点・フィードバックシステム
+              </p>
+              
+              {instructorLoading ? (
+                <div className="flex justify-center">
+                  <LoadingSpinner size="lg" />
+                  <span className="ml-2">講師情報を読み込み中...</span>
+                </div>
+              ) : (
+                <InstructorSelect 
+                  instructors={instructors}
+                  onSelect={handleInstructorSelect}
+                />
+              )}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </ToastProvider>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold">評価システム</h1>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">講師: {selectedInstructor.name}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedInstructor(null)}
-              >
-                講師変更
-              </Button>
+    <ToastProvider>
+      <main className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-3xl font-bold">評価システム</h1>
+              <div className="text-right">
+                <p className="text-sm text-gray-600">講師: {session?.name}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                >
+                  ログアウト
+                </Button>
+              </div>
             </div>
-          </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             <Card>
@@ -140,13 +173,19 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-8 text-center">
-            <Button size="lg">
-              評価を送信
-            </Button>
+            <div className="mt-8 text-center">
+              <Button 
+                size="lg"
+                onClick={handleSubmitEvaluation}
+                isLoading={isSubmitting}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? '送信中...' : '評価を送信'}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </ToastProvider>
   )
 }
