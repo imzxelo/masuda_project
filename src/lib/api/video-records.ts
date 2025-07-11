@@ -240,9 +240,9 @@ export async function updateVideoRecord(
   try {
     const updateData: any = {}
     
-    if (updates.songId) updateData.song_id = updates.songId
-    if (updates.songTitle) updateData.song_title = updates.songTitle
-    if (updates.recordedAt) updateData.recorded_at = updates.recordedAt
+    if (updates.songId !== undefined) updateData.song_id = updates.songId
+    if (updates.songTitle !== undefined) updateData.song_title = updates.songTitle
+    if (updates.recordedAt !== undefined) updateData.recorded_at = updates.recordedAt
 
     const { data, error } = await supabase
       .from('video_records')

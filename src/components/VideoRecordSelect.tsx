@@ -6,6 +6,7 @@ import { VideoRecord } from '@/types/video-record'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { useDebounce } from '@/hooks'
+import { VideoRecordEdit } from '@/components/VideoRecordEdit'
 
 interface VideoRecordSelectProps {
   studentId: string
@@ -22,6 +23,8 @@ export function VideoRecordSelect({
 }: VideoRecordSelectProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [editingVideoRecord, setEditingVideoRecord] = useState<VideoRecord | null>(null)
   
   const { 
     videoRecords, 
@@ -53,12 +56,41 @@ export function VideoRecordSelect({
     onVideoRecordSelect(videoRecord)
   }
 
+  const handleEditVideoRecord = (videoRecord: VideoRecord) => {
+    setEditingVideoRecord(videoRecord)
+    setShowEditForm(true)
+  }
+
+  const handleEditSuccess = () => {
+    setShowEditForm(false)
+    setEditingVideoRecord(null)
+    // 動画レコードリストを再読み込み
+    if (studentId) {
+      loadVideoRecordsByStudent(studentId)
+    }
+  }
+
+  const handleEditCancel = () => {
+    setShowEditForm(false)
+    setEditingVideoRecord(null)
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ja-JP', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     })
+  }
+
+  if (showEditForm && editingVideoRecord) {
+    return (
+      <VideoRecordEdit
+        videoRecord={editingVideoRecord}
+        onSuccess={handleEditSuccess}
+        onCancel={handleEditCancel}
+      />
+    )
   }
 
   if (isLoading) {
@@ -137,7 +169,7 @@ export function VideoRecordSelect({
             >
               <div className="p-4">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0" onClick={() => handleVideoRecordSelect(videoRecord)}>
                     <h4 className="text-sm font-medium text-gray-900 truncate">
                       {videoRecord.songTitle}
                     </h4>
@@ -145,13 +177,27 @@ export function VideoRecordSelect({
                       ID: {videoRecord.songId}
                     </p>
                   </div>
-                  {selectedVideoRecordId === videoRecord.id && (
-                    <div className="flex-shrink-0 ml-2">
-                      <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleEditVideoRecord(videoRecord)
+                      }}
+                      className="p-1 text-gray-400 hover:text-blue-600 rounded"
+                      title="動画レコードを編集"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
-                    </div>
-                  )}
+                    </button>
+                    {selectedVideoRecordId === videoRecord.id && (
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="mt-3 flex items-center justify-between text-sm text-gray-500">
@@ -173,13 +219,29 @@ export function VideoRecordSelect({
       {selectedVideoRecordId && (
         <Card className="bg-blue-50 border-blue-200">
           <div className="p-4">
-            <div className="flex items-center">
-              <svg className="h-5 w-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <h4 className="text-sm font-medium text-blue-900">
-                選択された動画レコード
-              </h4>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <h4 className="text-sm font-medium text-blue-900">
+                  選択された動画レコード
+                </h4>
+              </div>
+              <button
+                onClick={() => {
+                  const selected = videoRecords.find(v => v.id === selectedVideoRecordId)
+                  if (selected) {
+                    handleEditVideoRecord(selected)
+                  }
+                }}
+                className="p-1 text-blue-600 hover:text-blue-800 rounded"
+                title="動画レコードを編集"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
             </div>
             <div className="mt-2 text-sm text-blue-800">
               {(() => {
