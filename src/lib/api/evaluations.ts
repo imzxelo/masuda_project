@@ -16,7 +16,8 @@ export async function getEvaluations(filters?: EvaluationFilters): Promise<ApiRe
       .select(`
         *,
         students:student_id (id, name, email),
-        instructors:instructor_id (id, name, email)
+        instructors:instructor_id (id, name, email),
+        video_records:video_record_id (id, song_id, song_title, recorded_at)
       `)
       .order('created_at', { ascending: false })
 
@@ -26,6 +27,10 @@ export async function getEvaluations(filters?: EvaluationFilters): Promise<ApiRe
 
     if (filters?.instructorId) {
       query = query.eq('instructor_id', filters.instructorId)
+    }
+
+    if (filters?.videoRecordId) {
+      query = query.eq('video_record_id', filters.videoRecordId)
     }
 
     if (filters?.dateFrom) {
@@ -47,6 +52,7 @@ export async function getEvaluations(filters?: EvaluationFilters): Promise<ApiRe
       id: item.id,
       studentId: item.student_id,
       instructorId: item.instructor_id,
+      videoRecordId: item.video_record_id,
       scores: {
         pitch: item.pitch,
         rhythm: item.rhythm,
@@ -59,11 +65,13 @@ export async function getEvaluations(filters?: EvaluationFilters): Promise<ApiRe
         expression: item.expression_comment || '',
         technique: item.technique_comment || ''
       },
-      totalScore: item.pitch + item.rhythm + item.expression + item.technique,
+      sentToN8n: item.sent_to_n8n || false,
+      sentToN8nAt: item.sent_to_n8n_at || undefined,
       createdAt: item.created_at,
       updatedAt: item.updated_at,
       students: item.students,
-      instructors: item.instructors
+      instructors: item.instructors,
+      videoRecords: item.video_records
     }))
 
     return {
@@ -87,7 +95,8 @@ export async function getEvaluationById(id: string): Promise<ApiResponse<Evaluat
       .select(`
         *,
         students:student_id (id, name, email),
-        instructors:instructor_id (id, name, email)
+        instructors:instructor_id (id, name, email),
+        video_records:video_record_id (id, song_id, song_title, recorded_at)
       `)
       .eq('id', id)
       .single()
@@ -101,6 +110,7 @@ export async function getEvaluationById(id: string): Promise<ApiResponse<Evaluat
       id: data.id,
       studentId: data.student_id,
       instructorId: data.instructor_id,
+      videoRecordId: data.video_record_id,
       scores: {
         pitch: data.pitch,
         rhythm: data.rhythm,
@@ -113,11 +123,13 @@ export async function getEvaluationById(id: string): Promise<ApiResponse<Evaluat
         expression: data.expression_comment || '',
         technique: data.technique_comment || ''
       },
-      totalScore: data.pitch + data.rhythm + data.expression + data.technique,
+      sentToN8n: data.sent_to_n8n || false,
+      sentToN8nAt: data.sent_to_n8n_at || undefined,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       students: data.students,
-      instructors: data.instructors
+      instructors: data.instructors,
+      videoRecords: data.video_records
     } : null
 
     return {
@@ -142,6 +154,7 @@ export async function createEvaluation(input: EvaluationInput): Promise<ApiRespo
     const evaluationData = {
       student_id: input.studentId,
       instructor_id: input.instructorId,
+      video_record_id: input.videoRecordId,
       pitch: input.scores.pitch,
       rhythm: input.scores.rhythm,
       expression: input.scores.expression,
@@ -157,7 +170,12 @@ export async function createEvaluation(input: EvaluationInput): Promise<ApiRespo
     const { data, error } = await supabase
       .from('evaluations_v2')
       .insert(evaluationData)
-      .select('*')
+      .select(`
+        *,
+        students:student_id (id, name, email),
+        instructors:instructor_id (id, name, email),
+        video_records:video_record_id (id, song_id, song_title, recorded_at)
+      `)
       .single()
 
     if (error) {
@@ -170,6 +188,7 @@ export async function createEvaluation(input: EvaluationInput): Promise<ApiRespo
       id: data.id,
       studentId: data.student_id,
       instructorId: data.instructor_id,
+      videoRecordId: data.video_record_id,
       scores: {
         pitch: data.pitch,
         rhythm: data.rhythm,
@@ -182,9 +201,13 @@ export async function createEvaluation(input: EvaluationInput): Promise<ApiRespo
         expression: data.expression_comment || '',
         technique: data.technique_comment || ''
       },
-      totalScore: data.pitch + data.rhythm + data.expression + data.technique,
+      sentToN8n: data.sent_to_n8n || false,
+      sentToN8nAt: data.sent_to_n8n_at || undefined,
       createdAt: data.created_at,
-      updatedAt: data.updated_at
+      updatedAt: data.updated_at,
+      students: data.students,
+      instructors: data.instructors,
+      videoRecords: data.video_records
     }
 
     return {
@@ -233,7 +256,8 @@ export async function updateEvaluation(
       .select(`
         *,
         students:student_id (id, name, email),
-        instructors:instructor_id (id, name, email)
+        instructors:instructor_id (id, name, email),
+        video_records:video_record_id (id, song_id, song_title, recorded_at)
       `)
       .single()
 
@@ -246,6 +270,7 @@ export async function updateEvaluation(
       id: data.id,
       studentId: data.student_id,
       instructorId: data.instructor_id,
+      videoRecordId: data.video_record_id,
       scores: {
         pitch: data.pitch,
         rhythm: data.rhythm,
@@ -258,11 +283,13 @@ export async function updateEvaluation(
         expression: data.expression_comment || '',
         technique: data.technique_comment || ''
       },
-      totalScore: data.pitch + data.rhythm + data.expression + data.technique,
+      sentToN8n: data.sent_to_n8n || false,
+      sentToN8nAt: data.sent_to_n8n_at || undefined,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       students: data.students,
-      instructors: data.instructors
+      instructors: data.instructors,
+      videoRecords: data.video_records
     }
 
     return {
@@ -381,18 +408,20 @@ export async function getEvaluationSummary(
 
 export async function markEvaluationAsSent(id: string): Promise<ApiResponse<Evaluation>> {
   try {
-    // evaluations_v2にはsent_to_n8nカラムがないため、この機能は無効化するか、
-    // 必要に応じてカラムを追加してください
-    
-    // 一時的にダミーデータを返す
+    // sent_to_n8nフラグをtrueに設定し、送信日時を記録
     const { data, error } = await supabase
       .from('evaluations_v2')
+      .update({
+        sent_to_n8n: true,
+        sent_to_n8n_at: new Date().toISOString()
+      })
+      .eq('id', id)
       .select(`
         *,
         students:student_id (id, name, email),
-        instructors:instructor_id (id, name, email)
+        instructors:instructor_id (id, name, email),
+        video_records:video_record_id (id, song_id, song_title, recorded_at)
       `)
-      .eq('id', id)
       .single()
 
     if (error) {
@@ -404,6 +433,7 @@ export async function markEvaluationAsSent(id: string): Promise<ApiResponse<Eval
       id: data.id,
       studentId: data.student_id,
       instructorId: data.instructor_id,
+      videoRecordId: data.video_record_id,
       scores: {
         pitch: data.pitch,
         rhythm: data.rhythm,
@@ -416,11 +446,13 @@ export async function markEvaluationAsSent(id: string): Promise<ApiResponse<Eval
         expression: data.expression_comment || '',
         technique: data.technique_comment || ''
       },
-      totalScore: data.pitch + data.rhythm + data.expression + data.technique,
+      sentToN8n: data.sent_to_n8n || false,
+      sentToN8nAt: data.sent_to_n8n_at || undefined,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       students: data.students,
-      instructors: data.instructors
+      instructors: data.instructors,
+      videoRecords: data.video_records
     }
 
     return {

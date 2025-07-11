@@ -16,6 +16,7 @@ export interface Evaluation {
   id: string
   studentId: string
   instructorId: string
+  videoRecordId: string
   scores: EvaluationScore
   comments: EvaluationComments
   generalComments?: string
@@ -28,6 +29,7 @@ export interface Evaluation {
 export interface EvaluationInput {
   studentId: string
   instructorId: string
+  videoRecordId: string
   scores: EvaluationScore
   comments: EvaluationComments
   generalComments?: string
@@ -41,6 +43,7 @@ export interface EvaluationSummary {
 
 export interface EvaluationFormData {
   studentId: string
+  videoRecordId: string
   scores: EvaluationScore
   comments: EvaluationComments
   generalComments?: string
@@ -49,6 +52,7 @@ export interface EvaluationFormData {
 export interface EvaluationFilters {
   studentId?: string
   instructorId?: string
+  videoRecordId?: string
   dateFrom?: string
   dateTo?: string
 }

@@ -1,4 +1,5 @@
 export * from './evaluations'
 export * from './instructors'
 export * from './students'
+export * from './video-records'
 export * from './webhook'

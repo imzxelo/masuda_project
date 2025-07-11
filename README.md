@@ -91,6 +91,10 @@ src/
 - 🔄 n8nへの自動データ送信とレポート生成
 - 📱 レスポンシブデザイン
 - 👥 10名講師の認証・選択システム
+- 🎵 採点対象動画レコード管理
+- 🔍 検索型選択UI（講師・生徒）
+- ✅ 登録内容確認機能
+- ✏️ 情報編集機能
 
 ## 🚀 現在の実装状況
 
@@ -113,7 +117,13 @@ src/
 - データベース保存（evaluations_v2テーブル）
 - n8nレポート生成連携
 
-### 📋 次のステップ (Phase 5以降)
+### 🚧 実装中 (Phase 5)
+- **採点対象動画レコード管理**: 生徒の歌唱動画を管理・選択する機能
+- **検索型選択UI**: 講師・生徒をtype-ahead形式で検索・選択
+- **登録内容確認画面**: 新規登録時の確認フロー
+- **編集機能**: 登録済み情報の編集・更新機能
+
+### 📋 次のステップ (Phase 6以降)
 - **評価履歴表示**: 過去の評価データの表示・管理・可視化
 - **レポート管理**: n8nからのレポート生成結果確認・ダウンロード機能
 - **統計ダッシュボード**: 講師・生徒別の評価統計・トレンド分析
@@ -188,11 +198,23 @@ CREATE TABLE students (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 採点対象動画レコードテーブル
+CREATE TABLE video_records (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  student_id UUID REFERENCES students(id) NOT NULL,
+  song_id TEXT NOT NULL,
+  song_title TEXT NOT NULL,
+  recorded_at DATE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- 評価テーブル（v2 - 個別カラム構造）
 CREATE TABLE evaluations_v2 (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   student_id UUID REFERENCES students(id) NOT NULL,
   instructor_id UUID REFERENCES instructors(id) NOT NULL,
+  video_record_id UUID REFERENCES video_records(id) NOT NULL,
   pitch INTEGER CHECK (pitch BETWEEN 0 AND 10) NOT NULL,
   rhythm INTEGER CHECK (rhythm BETWEEN 0 AND 10) NOT NULL,
   expression INTEGER CHECK (expression BETWEEN 0 AND 10) NOT NULL,
@@ -212,6 +234,7 @@ CREATE TABLE evaluations_v2 (
 -- 各テーブルにRLSポリシーを設定
 CREATE POLICY "Allow anonymous access on instructors" ON instructors FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "Allow anonymous access on students" ON students FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anonymous access on video_records" ON video_records FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "Allow anonymous access on evaluations_v2" ON evaluations_v2 FOR ALL TO anon USING (true) WITH CHECK (true);
 ```
 
@@ -232,15 +255,21 @@ CREATE POLICY "Allow anonymous access on evaluations_v2" ON evaluations_v2 FOR A
    - 名前、メールアドレス（任意）、学年（任意）を入力して登録
    - 登録後、すぐに評価対象として選択可能
 
+3. **動画レコード登録**:
+   - 生徒選択後、「新しい動画レコードを登録」ボタンをクリック
+   - 楽曲ID、楽曲タイトル、録音日付を入力して登録
+   - 登録後、すぐに評価対象として選択可能
+
 ### 4. システム利用
 
 **評価の流れ:**
 1. 講師を選択してシステムにログイン
 2. 評価対象の生徒を選択
-3. 4項目（音程・リズム・表現・テクニック）を10点満点で評価
-4. 各項目にコメントを入力（任意）
-5. 「評価を送信」でデータベースに保存
-6. 自動的にn8nへWebhook送信でレポート生成開始
+3. 生徒の採点対象動画を選択（楽曲・録音日付）
+4. 4項目（音程・リズム・表現・テクニック）を10点満点で評価
+5. 各項目にコメントを入力（任意）
+6. 「評価を送信」でデータベースに保存
+7. 自動的にn8nへWebhook送信でレポート生成開始
 
 ## 🛠️ 開発環境とテスト
 
@@ -273,8 +302,69 @@ http://localhost:3000/test
 - **データベース**: PostgreSQL (Supabase)
   - `instructors` テーブル: 講師情報
   - `students` テーブル: 生徒情報  
+  - `video_records` テーブル: 採点対象動画レコード
   - `evaluations_v2` テーブル: 評価データ（個別カラム構造）
 - **状態管理**: Zustand with persistence
 - **API層**: Supabase Client with TypeScript
 - **UI**: Tailwind CSS + Recharts
 - **外部連携**: n8n Webhook for report generation
+
+## 🎵 採点対象動画レコード管理
+
+### 機能概要
+生徒が歌った楽曲の録音データを管理し、評価対象として選択できる機能です。
+
+### 動画レコード構造
+- **楽曲ID**: 楽曲を識別するID
+- **楽曲タイトル**: 楽曲の名称
+- **録音日付**: 録音した日付
+- **生徒との関連**: 特定の生徒に紐づけられた動画レコード
+
+### 利用シーン
+1. 生徒が複数の楽曲を録音している場合
+2. 同じ楽曲を複数回録音している場合
+3. 日付別に評価を管理したい場合
+
+## 🔍 検索型選択UI
+
+### 機能概要
+講師選択と生徒選択において、type-ahead（先行入力）形式での検索・選択機能を提供します。
+
+### 検索機能
+- **部分一致検索**: 苗字、名前、メールアドレスでの検索
+- **リアルタイム検索**: 入力と同時に候補を絞り込み
+- **デバウンス機能**: 検索パフォーマンスの最適化
+
+### UI仕様
+- 入力フィールドでの検索
+- ドロップダウンでの候補表示
+- キーボード操作対応（矢印キー、Enter）
+
+## ✅ 登録内容確認機能
+
+### 機能概要
+新規登録時に入力内容を確認できる確認画面を表示します。
+
+### 確認対象
+- 講師登録内容
+- 生徒登録内容
+- 動画レコード登録内容
+
+### 確認画面構成
+- 入力内容の表示
+- 修正ボタン（前の画面に戻る）
+- 確定ボタン（登録実行）
+
+## ✏️ 編集機能
+
+### 機能概要
+登録済みの情報を後から編集・更新できる機能です。
+
+### 編集対象
+- 生徒情報の編集
+- 動画レコード情報の編集
+
+### 編集画面構成
+- 既存情報の表示
+- 編集フォーム
+- 保存・キャンセル機能

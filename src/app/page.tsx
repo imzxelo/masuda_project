@@ -6,10 +6,13 @@ import EvaluationSlider from '@/components/EvaluationSlider'
 import InstructorSelect from '@/components/InstructorSelect'
 import StudentSelect from '@/components/StudentSelect'
 import InstructorRegister from '@/components/InstructorRegister'
+import VideoRecordSelect from '@/components/VideoRecordSelect'
+import VideoRecordRegister from '@/components/VideoRecordRegister'
 import { Card, Button, LoadingSpinner, ToastProvider } from '@/components/ui'
 import { EvaluationScore, EvaluationComments, InstructorSession } from '@/types'
+import { VideoRecord } from '@/types/video-record'
 import { useInstructor, useEvaluation } from '@/hooks'
-import { useEvaluationStore, useStudentStore } from '@/stores'
+import { useEvaluationStore, useStudentStore, useVideoRecordStore } from '@/stores'
 
 export default function Home() {
   // Hooks
@@ -30,6 +33,7 @@ export default function Home() {
     updateScores, 
     updateComments, 
     setStudentId,
+    setVideoRecordId,
     isSubmitting 
   } = useEvaluationStore()
   
@@ -39,7 +43,14 @@ export default function Home() {
     clearSelectedStudent 
   } = useStudentStore()
   
+  const { 
+    selectedVideoRecord, 
+    setSelectedVideoRecord, 
+    clearVideoRecords 
+  } = useVideoRecordStore()
+  
   const [showRegisterForm, setShowRegisterForm] = useState(false)
+  const [showVideoRegisterForm, setShowVideoRegisterForm] = useState(false)
   
 
   useEffect(() => {
@@ -47,7 +58,10 @@ export default function Home() {
     if (selectedStudent) {
       setStudentId(selectedStudent.id)
     }
-  }, [updateScores, setStudentId, selectedStudent])
+    if (selectedVideoRecord) {
+      setVideoRecordId(selectedVideoRecord.id)
+    }
+  }, [updateScores, setStudentId, selectedStudent, setVideoRecordId, selectedVideoRecord])
 
   const handleEvaluationChange = (newScores: EvaluationScore, newComments: EvaluationComments) => {
     updateScores(newScores)
@@ -61,10 +75,30 @@ export default function Home() {
   const handleLogout = () => {
     logout()
     clearSelectedStudent()
+    clearVideoRecords()
   }
 
   const handleStudentSelect = (student: any) => {
     setSelectedStudent(student)
+    // 生徒を変更したら動画レコードの選択をクリア
+    setSelectedVideoRecord(null)
+  }
+
+  const handleVideoRecordSelect = (videoRecord: VideoRecord) => {
+    setSelectedVideoRecord(videoRecord)
+  }
+
+  const handleVideoRecordCreate = () => {
+    setShowVideoRegisterForm(true)
+  }
+
+  const handleVideoRegisterSuccess = () => {
+    setShowVideoRegisterForm(false)
+    // 動画レコードリストが自動で更新されるのを待つ
+  }
+
+  const handleVideoRegisterCancel = () => {
+    setShowVideoRegisterForm(false)
   }
   
   const handleRegisterSuccess = async () => {
@@ -103,11 +137,18 @@ export default function Home() {
       return
     }
     
+    if (!selectedVideoRecord) {
+      console.error('No video record selected')
+      return
+    }
+    
     console.log('Submitting evaluation:', {
       instructorId: session.instructorId,
       studentId: selectedStudent.id,
+      videoRecordId: selectedVideoRecord.id,
       session,
-      selectedStudent
+      selectedStudent,
+      selectedVideoRecord
     })
     
     const success = await submitEvaluation(session.instructorId)
@@ -195,6 +236,9 @@ export default function Home() {
                 {selectedStudent && (
                   <p className="text-sm text-gray-600">対象生徒: {selectedStudent.name}</p>
                 )}
+                {selectedVideoRecord && (
+                  <p className="text-sm text-gray-600">対象動画: {selectedVideoRecord.songTitle}</p>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -214,29 +258,70 @@ export default function Home() {
               </div>
             )}
 
-            {selectedStudent && (
-              <div className="mb-6 flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <div>
-                  <h3 className="text-lg font-semibold text-blue-800">評価対象生徒</h3>
-                  <p className="text-blue-700">{selectedStudent.name}</p>
-                  {selectedStudent.email && (
-                    <p className="text-sm text-blue-600">{selectedStudent.email}</p>
-                  )}
-                  {selectedStudent.grade && (
-                    <p className="text-sm text-blue-600">学年: {selectedStudent.grade}</p>
-                  )}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedStudent(null)}
-                >
-                  生徒を変更
-                </Button>
+            {selectedStudent && !selectedVideoRecord && (
+              <div className="mb-8">
+                {showVideoRegisterForm ? (
+                  <VideoRecordRegister
+                    studentId={selectedStudent.id}
+                    onSuccess={handleVideoRegisterSuccess}
+                    onCancel={handleVideoRegisterCancel}
+                  />
+                ) : (
+                  <VideoRecordSelect
+                    studentId={selectedStudent.id}
+                    onVideoRecordSelect={handleVideoRecordSelect}
+                    onCreateNew={handleVideoRecordCreate}
+                    selectedVideoRecordId={selectedVideoRecord?.id}
+                  />
+                )}
               </div>
             )}
 
-            {selectedStudent && (
+            {selectedStudent && selectedVideoRecord && (
+              <div className="mb-6 space-y-4">
+                <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div>
+                    <h3 className="text-lg font-semibold text-blue-800">評価対象生徒</h3>
+                    <p className="text-blue-700">{selectedStudent.name}</p>
+                    {selectedStudent.email && (
+                      <p className="text-sm text-blue-600">{selectedStudent.email}</p>
+                    )}
+                    {selectedStudent.grade && (
+                      <p className="text-sm text-blue-600">学年: {selectedStudent.grade}</p>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedStudent(null)}
+                  >
+                    生徒を変更
+                  </Button>
+                </div>
+                
+                <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div>
+                    <h3 className="text-lg font-semibold text-green-800">採点対象動画</h3>
+                    <p className="text-green-700">{selectedVideoRecord.songTitle}</p>
+                    {selectedVideoRecord.songId && (
+                      <p className="text-sm text-green-600">ID: {selectedVideoRecord.songId}</p>
+                    )}
+                    <p className="text-sm text-green-600">
+                      録音日: {new Date(selectedVideoRecord.recordedAt).toLocaleDateString('ja-JP')}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedVideoRecord(null)}
+                  >
+                    動画を変更
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {selectedStudent && selectedVideoRecord && (
               <>
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                   <Card>
@@ -307,7 +392,7 @@ export default function Home() {
                     size="lg"
                     onClick={handleSubmitEvaluation}
                     isLoading={isSubmitting}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !selectedStudent || !selectedVideoRecord}
                   >
                     {isSubmitting ? '送信中...' : '評価を送信'}
                   </Button>
