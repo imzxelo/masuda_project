@@ -189,26 +189,68 @@ export async function updateStudent(
     if (updates.grade !== undefined) updateData.grade = updates.grade
     if (updates.isActive !== undefined) updateData.is_active = updates.isActive
 
+    console.log('Updating student with ID:', id)
+    console.log('Update data:', updateData)
+
+    // まず、学生が存在するか確認
+    const { data: existingStudent, error: fetchError } = await supabase
+      .from('students')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !existingStudent) {
+      console.error('Student not found:', fetchError)
+      throw new Error('更新対象の生徒が見つかりません')
+    }
+
+    console.log('Existing student found:', existingStudent)
+
+    // RLS問題の回避のため、更新前に更新予定の行数を確認
+    const { count, error: countError } = await supabase
+      .from('students')
+      .select('*', { count: 'exact', head: true })
+      .eq('id', id)
+
+    console.log('Rows to update count:', count)
+
+    if (countError) {
+      console.error('Count error:', countError)
+      throw countError
+    }
+
+    if (count === 0) {
+      throw new Error('更新対象の生徒が見つかりません（RLS制限の可能性）')
+    }
+
+    // 更新処理
     const { data, error } = await supabase
       .from('students')
       .update(updateData)
       .eq('id', id)
       .select()
-      .single()
 
     if (error) {
+      console.error('Update error:', error)
       throw error
     }
 
+    if (!data || data.length === 0) {
+      throw new Error('更新は成功しましたが、データが返されませんでした')
+    }
+
+    // single()の代わりに配列の最初の要素を使用
+    const updatedStudent = data[0]
+
     // データベースのsnake_caseをcamelCaseにマップ
     const mappedData = {
-      id: data.id,
-      name: data.name,
-      email: data.email,
-      grade: data.grade,
-      isActive: data.is_active,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
+      id: updatedStudent.id,
+      name: updatedStudent.name,
+      email: updatedStudent.email,
+      grade: updatedStudent.grade,
+      isActive: updatedStudent.is_active,
+      createdAt: updatedStudent.created_at,
+      updatedAt: updatedStudent.updated_at
     }
 
     return {

@@ -244,26 +244,50 @@ export async function updateVideoRecord(
     if (updates.songTitle !== undefined) updateData.song_title = updates.songTitle
     if (updates.recordedAt !== undefined) updateData.recorded_at = updates.recordedAt
 
+    console.log('Updating video record with ID:', id)
+    console.log('Update data:', updateData)
+
+    // まず、動画レコードが存在するか確認
+    const { data: existingRecord, error: fetchError } = await supabase
+      .from('video_records')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !existingRecord) {
+      console.error('Video record not found:', fetchError)
+      throw new Error('更新対象の動画レコードが見つかりません')
+    }
+
+    console.log('Existing video record found:', existingRecord)
+
     const { data, error } = await supabase
       .from('video_records')
       .update(updateData)
       .eq('id', id)
       .select()
-      .single()
 
     if (error) {
+      console.error('Update error:', error)
       throw error
     }
 
+    if (!data || data.length === 0) {
+      throw new Error('更新は成功しましたが、データが返されませんでした')
+    }
+
+    // single()の代わりに配列の最初の要素を使用
+    const updatedRecord = data[0]
+
     // データベースのsnake_caseをcamelCaseにマップ
     const mappedData = {
-      id: data.id,
-      studentId: data.student_id,
-      songId: data.song_id,
-      songTitle: data.song_title,
-      recordedAt: data.recorded_at,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
+      id: updatedRecord.id,
+      studentId: updatedRecord.student_id,
+      songId: updatedRecord.song_id,
+      songTitle: updatedRecord.song_title,
+      recordedAt: updatedRecord.recorded_at,
+      createdAt: updatedRecord.created_at,
+      updatedAt: updatedRecord.updated_at
     }
 
     return {
