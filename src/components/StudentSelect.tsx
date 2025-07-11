@@ -21,6 +21,7 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
   const [showRegisterForm, setShowRegisterForm] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const [isComposing, setIsComposing] = useState(false)
   
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -98,8 +99,21 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchQuery(value)
-    setIsDropdownOpen(true)
+    // IME変換中でない場合のみドロップダウンを開く
+    if (!isComposing) {
+      setIsDropdownOpen(true)
+    }
     setHighlightedIndex(-1)
+  }
+
+  const handleCompositionStart = () => {
+    setIsComposing(true)
+  }
+
+  const handleCompositionEnd = () => {
+    setIsComposing(false)
+    // IME変換が完了したときにドロップダウンを開く
+    setIsDropdownOpen(true)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -144,12 +158,12 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // 検索クエリが変更されたときにドロップダウンを開く
+  // 検索クエリが変更されたときにドロップダウンを開く（IME変換中は除く）
   useEffect(() => {
-    if (debouncedSearchQuery && !selectedStudent) {
+    if (debouncedSearchQuery && !selectedStudent && !isComposing) {
       setIsDropdownOpen(true)
     }
-  }, [debouncedSearchQuery, selectedStudent])
+  }, [debouncedSearchQuery, selectedStudent, isComposing])
   
   const handleRegisterSuccess = () => {
     setShowRegisterForm(false)
@@ -200,7 +214,9 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
               value={searchQuery}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              onFocus={() => setIsDropdownOpen(true)}
+              onFocus={() => !isComposing && setIsDropdownOpen(true)}
+              onCompositionStart={handleCompositionStart}
+              onCompositionEnd={handleCompositionEnd}
               className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               disabled={isLoading}
             />
