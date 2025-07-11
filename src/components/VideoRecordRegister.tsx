@@ -25,6 +25,7 @@ export function VideoRecordRegister({
   })
   
   const [errors, setErrors] = useState<Partial<Record<keyof typeof formData, string>>>({})
+  const [showConfirmation, setShowConfirmation] = useState(false)
   
   const { createVideoRecord, isLoading } = useVideoRecord()
 
@@ -65,6 +66,11 @@ export function VideoRecordRegister({
       return
     }
 
+    // 確認画面を表示
+    setShowConfirmation(true)
+  }
+
+  const handleConfirmSubmit = async () => {
     const input: VideoRecordInput = {
       ...formData,
       studentId
@@ -81,7 +87,93 @@ export function VideoRecordRegister({
       onSuccess()
     } else {
       console.error('Video record creation failed')
+      setShowConfirmation(false)
     }
+  }
+
+  const handleBackToEdit = () => {
+    setShowConfirmation(false)
+  }
+
+  // 確認画面を表示
+  if (showConfirmation) {
+    return (
+      <Card className="max-w-md mx-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-medium text-gray-900">
+              動画レコード登録確認
+            </h3>
+            <Button
+              onClick={handleBackToEdit}
+              variant="ghost"
+              size="sm"
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ×
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">登録内容</h4>
+              <dl className="space-y-2">
+                <div>
+                  <dt className="text-sm font-medium text-gray-700">楽曲ID</dt>
+                  <dd className="text-base text-gray-900">{formData.songId || '未設定'}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-700">楽曲タイトル</dt>
+                  <dd className="text-base text-gray-900">{formData.songTitle}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-700">録音日付</dt>
+                  <dd className="text-base text-gray-900">
+                    {new Date(formData.recordedAt).toLocaleDateString('ja-JP')}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <h4 className="text-sm font-medium text-yellow-800 mb-1">注意</h4>
+              <ul className="text-sm text-yellow-700 space-y-1">
+                <li>• 登録後は即座に動画レコード選択画面に表示されます</li>
+                <li>• 楽曲IDは任意項目です</li>
+                <li>• 録音日付は今日以前の日付で設定してください</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex space-x-3 pt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleBackToEdit}
+              disabled={isLoading}
+              className="flex-1"
+            >
+              内容を修正
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmSubmit}
+              disabled={isLoading}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  登録中...
+                </>
+              ) : (
+                '登録を実行'
+              )}
+            </Button>
+          </div>
+        </div>
+      </Card>
+    )
   }
 
   return (
@@ -153,6 +245,15 @@ export function VideoRecordRegister({
             )}
           </div>
 
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <h4 className="text-sm font-medium text-blue-800 mb-1">注意事項</h4>
+            <ul className="text-sm text-blue-700 space-y-1">
+              <li>• 登録後は即座に動画レコード選択画面に表示されます</li>
+              <li>• 楽曲IDは任意項目です</li>
+              <li>• 録音日付は今日以前の日付で設定してください</li>
+            </ul>
+          </div>
+
           <div className="flex space-x-3 pt-4">
             <Button
               type="button"
@@ -168,20 +269,13 @@ export function VideoRecordRegister({
               disabled={isLoading}
               className="flex-1"
             >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  登録中...
-                </>
-              ) : (
-                '登録'
-              )}
+              内容を確認
             </Button>
           </div>
         </form>
 
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">登録内容</h4>
+          <h4 className="text-sm font-medium text-gray-900 mb-2">入力内容プレビュー</h4>
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-600">楽曲ID:</dt>

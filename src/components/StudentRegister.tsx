@@ -17,6 +17,7 @@ export default function StudentRegister({ onSuccess, onCancel }: StudentRegister
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  const [showConfirmation, setShowConfirmation] = useState(false)
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
@@ -49,6 +50,11 @@ export default function StudentRegister({ onSuccess, onCancel }: StudentRegister
       return
     }
 
+    // 確認画面を表示
+    setShowConfirmation(true)
+  }
+
+  const handleConfirmSubmit = async () => {
     setIsSubmitting(true)
     try {
       const result = await createStudent({
@@ -67,13 +73,98 @@ export default function StudentRegister({ onSuccess, onCancel }: StudentRegister
         } else {
           setErrors({ general: result.error || '登録に失敗しました' })
         }
+        setShowConfirmation(false)
       }
     } catch (error) {
       console.error('生徒登録エラー:', error)
       setErrors({ general: '予期しないエラーが発生しました' })
+      setShowConfirmation(false)
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleBackToEdit = () => {
+    setShowConfirmation(false)
+  }
+
+  // 確認画面を表示
+  if (showConfirmation) {
+    return (
+      <Card className="max-w-md mx-auto">
+        <div className="space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">生徒登録確認</h2>
+            <p className="text-gray-600">以下の内容で登録します</p>
+          </div>
+
+          {/* 確認内容 */}
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">登録内容</h3>
+              <dl className="space-y-2">
+                <div>
+                  <dt className="text-sm font-medium text-gray-700">生徒名</dt>
+                  <dd className="text-base text-gray-900">{formData.name}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-700">メールアドレス</dt>
+                  <dd className="text-base text-gray-900">{formData.email || '未設定'}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-700">学年</dt>
+                  <dd className="text-base text-gray-900">{formData.grade || '未設定'}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-700">ステータス</dt>
+                  <dd className="text-base text-green-600 font-medium">アクティブ</dd>
+                </div>
+              </dl>
+            </div>
+
+            {/* 全般エラー */}
+            {errors.general && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-800 text-sm">{errors.general}</p>
+              </div>
+            )}
+
+            {/* 注意事項 */}
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <h4 className="text-sm font-medium text-yellow-800 mb-1">注意</h4>
+              <ul className="text-sm text-yellow-700 space-y-1">
+                <li>• 登録後は即座に生徒選択画面に表示されます</li>
+                <li>• メールアドレスは任意ですが、入力する場合は重複できません</li>
+                <li>• 学年は自由記述で入力できます</li>
+                <li>• 登録後の情報変更はデータベースから直接行ってください</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* ボタン */}
+          <div className="flex space-x-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleBackToEdit}
+              disabled={isSubmitting}
+              className="flex-1"
+            >
+              内容を修正
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmSubmit}
+              isLoading={isSubmitting}
+              disabled={isSubmitting}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              {isSubmitting ? '登録中...' : '登録を実行'}
+            </Button>
+          </div>
+        </div>
+      </Card>
+    )
   }
 
   return (
@@ -173,7 +264,7 @@ export default function StudentRegister({ onSuccess, onCancel }: StudentRegister
               disabled={isSubmitting}
               className="flex-1"
             >
-              {isSubmitting ? '登録中...' : '生徒を登録'}
+              内容を確認
             </Button>
           </div>
         </form>
@@ -181,7 +272,7 @@ export default function StudentRegister({ onSuccess, onCancel }: StudentRegister
         {/* 成功メッセージ用のスペース */}
         <div className="text-center">
           <p className="text-sm text-gray-500">
-            登録完了後、生徒選択画面に戻ります
+            入力内容を確認後、登録を実行します
           </p>
         </div>
       </div>
