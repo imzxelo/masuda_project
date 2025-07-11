@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Card, Button, Input, LoadingSpinner } from '@/components/ui'
 import StudentRegister from '@/components/StudentRegister'
 import { Student } from '@/types/student'
@@ -19,8 +19,12 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
   const [searchQuery, setSearchQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [showRegisterForm, setShowRegisterForm] = useState(false)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
   
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Load initial students
   useEffect(() => {
@@ -79,12 +83,73 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
   }, [students])
 
   const handleStudentSelect = (student: Student) => {
+    setSearchQuery(student.name)
+    setIsDropdownOpen(false)
+    setHighlightedIndex(-1)
     onSelect(student)
   }
 
   const clearSearch = () => {
     setSearchQuery('')
+    setIsDropdownOpen(false)
+    setHighlightedIndex(-1)
   }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchQuery(value)
+    setIsDropdownOpen(true)
+    setHighlightedIndex(-1)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isDropdownOpen) return
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setHighlightedIndex(prev => 
+          prev < filteredStudents.length - 1 ? prev + 1 : 0
+        )
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setHighlightedIndex(prev => 
+          prev > 0 ? prev - 1 : filteredStudents.length - 1
+        )
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (highlightedIndex >= 0 && filteredStudents[highlightedIndex]) {
+          handleStudentSelect(filteredStudents[highlightedIndex])
+        }
+        break
+      case 'Escape':
+        setIsDropdownOpen(false)
+        setHighlightedIndex(-1)
+        break
+    }
+  }
+
+  // 外側をクリックした時にドロップダウンを閉じる
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false)
+        setHighlightedIndex(-1)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // 検索クエリが変更されたときにドロップダウンを開く
+  useEffect(() => {
+    if (debouncedSearchQuery && !selectedStudent) {
+      setIsDropdownOpen(true)
+    }
+  }, [debouncedSearchQuery, selectedStudent])
   
   const handleRegisterSuccess = () => {
     setShowRegisterForm(false)
@@ -110,22 +175,34 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">生徒選択</h3>
-          {selectedStudent && (
-            <div className="text-sm text-gray-600">
-              選択中: <span className="font-medium">{selectedStudent.name}</span>
-            </div>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowRegisterForm(true)}
+            className="bg-white"
+          >
+            新しい生徒を登録
+          </Button>
         </div>
 
-        {/* Search Input */}
-        <div className="space-y-2">
+        {/* Type-ahead Search Input */}
+        <div className="relative" ref={dropdownRef}>
           <div className="relative">
-            <Input
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              ref={inputRef}
               type="text"
               placeholder="生徒名またはメールアドレスで検索..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setIsDropdownOpen(true)}
+              className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              disabled={isLoading}
             />
             {searchQuery && (
               <button
@@ -135,20 +212,74 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
                 ✕
               </button>
             )}
+            {isLoading && (
+              <div className="absolute inset-y-0 right-10 pr-3 flex items-center pointer-events-none">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              </div>
+            )}
           </div>
-          
-          {searchQuery && (
-            <div className="text-sm text-gray-500">
-              "{searchQuery}" の検索結果: {filteredStudents.length}件
+
+          {/* Dropdown Menu */}
+          {isDropdownOpen && !error && (
+            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+              {filteredStudents.length > 0 ? (
+                filteredStudents.map((student, index) => (
+                  <div
+                    key={student.id}
+                    className={`cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 ${
+                      index === highlightedIndex ? 'bg-blue-50' : ''
+                    }`}
+                    onClick={() => handleStudentSelect(student)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">{student.name}</span>
+                        {student.email && (
+                          <span className="text-sm text-gray-500">{student.email}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {student.grade && (
+                          <span className="text-xs bg-gray-200 px-2 py-1 rounded">
+                            {student.grade}
+                          </span>
+                        )}
+                        {selectedStudent?.id === student.id && (
+                          <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-3 py-2 text-gray-500 text-center">
+                  {debouncedSearchQuery ? '該当する生徒が見つかりません' : 'アクティブな生徒がいません'}
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-8">
-            <LoadingSpinner size="md" />
-            <span className="ml-2 text-gray-600">生徒データを読み込み中...</span>
+        {/* Selected Student Display */}
+        {selectedStudent && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-sm font-medium text-blue-900">選択された生徒:</span>
+                <div className="text-blue-800">{selectedStudent.name}</div>
+                {selectedStudent.email && (
+                  <div className="text-sm text-blue-600">{selectedStudent.email}</div>
+                )}
+                {selectedStudent.grade && (
+                  <div className="text-sm text-blue-600">学年: {selectedStudent.grade}</div>
+                )}
+              </div>
+              <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
           </div>
         )}
 
@@ -168,69 +299,10 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
           </div>
         )}
 
-        {/* Students List */}
-        {!isLoading && !error && (
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {filteredStudents.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                {searchQuery ? '検索条件に一致する生徒が見つかりません' : 'アクティブな生徒がいません'}
-              </div>
-            ) : (
-              filteredStudents.map((student) => (
-                <button
-                  key={student.id}
-                  onClick={() => handleStudentSelect(student)}
-                  className={`w-full p-3 text-left rounded-md border transition-colors ${
-                    selectedStudent?.id === student.id
-                      ? 'bg-blue-50 border-blue-300 text-blue-800'
-                      : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{student.name}</div>
-                      {student.email && (
-                        <div className="text-sm text-gray-500">{student.email}</div>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      {student.grade && (
-                        <div className="text-sm bg-gray-200 px-2 py-1 rounded">
-                          {student.grade}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* Summary and Register Button */}
-        {!isLoading && !error && (
-          <div className="pt-3 border-t space-y-3">
-            {filteredStudents.length > 0 && (
-              <div className="text-sm text-gray-600">
-                合計 {filteredStudents.length} 名の生徒が表示されています
-              </div>
-            )}
-            
-            {/* 生徒登録ボタン */}
-            <div className="text-center">
-              <p className="text-sm text-gray-600 mb-2">
-                {filteredStudents.length === 0 ? '登録された生徒がいません' : '新しい生徒を登録する場合'}
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => setShowRegisterForm(true)}
-                className="bg-white"
-              >
-                新しい生徒を登録
-              </Button>
-            </div>
-          </div>
-        )}
+        {/* Usage Hints */}
+        <div className="text-xs text-gray-500 text-center">
+          <p>↑↓ キーで選択、Enter キーで確定、Esc キーでキャンセル</p>
+        </div>
       </div>
     </Card>
   )
