@@ -184,9 +184,9 @@ export async function updateStudent(
   try {
     const updateData: any = {}
     
-    if (updates.name) updateData.name = updates.name
-    if (updates.email) updateData.email = updates.email
-    if (updates.grade) updateData.grade = updates.grade
+    if (updates.name !== undefined) updateData.name = updates.name
+    if (updates.email !== undefined) updateData.email = updates.email
+    if (updates.grade !== undefined) updateData.grade = updates.grade
     if (updates.isActive !== undefined) updateData.is_active = updates.isActive
 
     const { data, error } = await supabase
@@ -200,9 +200,20 @@ export async function updateStudent(
       throw error
     }
 
+    // データベースのsnake_caseをcamelCaseにマップ
+    const mappedData = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      grade: data.grade,
+      isActive: data.is_active,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    }
+
     return {
       success: true,
-      data,
+      data: mappedData,
       message: '生徒情報を更新しました'
     }
   } catch (error) {

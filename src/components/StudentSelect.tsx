@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Card, Button, Input, LoadingSpinner } from '@/components/ui'
 import StudentRegister from '@/components/StudentRegister'
+import StudentEdit from '@/components/StudentEdit'
 import { Student } from '@/types/student'
 import { getStudents, searchStudents } from '@/lib/api/students'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -19,6 +20,8 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
   const [searchQuery, setSearchQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [showRegisterForm, setShowRegisterForm] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const [isComposing, setIsComposing] = useState(false)
@@ -175,11 +178,38 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
     setShowRegisterForm(false)
   }
 
+  const handleEditStudent = (student: Student) => {
+    setEditingStudent(student)
+    setShowEditForm(true)
+  }
+
+  const handleEditSuccess = () => {
+    setShowEditForm(false)
+    setEditingStudent(null)
+    // 生徒リストを再読み込み
+    loadStudents()
+  }
+
+  const handleEditCancel = () => {
+    setShowEditForm(false)
+    setEditingStudent(null)
+  }
+
   if (showRegisterForm) {
     return (
       <StudentRegister 
         onSuccess={handleRegisterSuccess}
         onCancel={handleRegisterCancel}
+      />
+    )
+  }
+
+  if (showEditForm && editingStudent) {
+    return (
+      <StudentEdit 
+        student={editingStudent}
+        onSuccess={handleEditSuccess}
+        onCancel={handleEditCancel}
       />
     )
   }
@@ -245,10 +275,9 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
                     className={`cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 ${
                       index === highlightedIndex ? 'bg-blue-50' : ''
                     }`}
-                    onClick={() => handleStudentSelect(student)}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex flex-col">
+                      <div className="flex flex-col flex-1" onClick={() => handleStudentSelect(student)}>
                         <span className="font-medium text-gray-900">{student.name}</span>
                         {student.email && (
                           <span className="text-sm text-gray-500">{student.email}</span>
@@ -265,6 +294,18 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
                         )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEditStudent(student)
+                          }}
+                          className="p-1 text-gray-400 hover:text-blue-600 rounded"
+                          title="生徒情報を編集"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -292,9 +333,20 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
                   <div className="text-sm text-blue-600">学年: {selectedStudent.grade}</div>
                 )}
               </div>
-              <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleEditStudent(selectedStudent)}
+                  className="p-2 text-blue-600 hover:text-blue-800 rounded"
+                  title="生徒情報を編集"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
             </div>
           </div>
         )}
