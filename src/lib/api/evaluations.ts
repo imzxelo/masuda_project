@@ -5,7 +5,9 @@ import {
   EvaluationFilters, 
   EvaluationSummary,
   EvaluationScore,
-  EvaluationComments
+  EvaluationComments,
+  EvaluationHistory,
+  EvaluationStats
 } from '@/types/evaluation'
 import { ApiResponse } from '@/types/api'
 
@@ -465,6 +467,226 @@ export async function markEvaluationAsSent(id: string): Promise<ApiResponse<Eval
     return {
       success: false,
       error: error instanceof Error ? error.message : '送信状態の更新に失敗しました'
+    }
+  }
+}
+
+export async function getEvaluationHistory(filters?: EvaluationFilters): Promise<ApiResponse<EvaluationHistory[]>> {
+  try {
+    let query = supabase
+      .from('evaluations_v2')
+      .select(`
+        id,
+        pitch,
+        rhythm,
+        expression,
+        technique,
+        pitch_comment,
+        rhythm_comment,
+        expression_comment,
+        technique_comment,
+        created_at,
+        students:student_id (id, name),
+        instructors:instructor_id (id, name),
+        video_records:video_record_id (id, song_id, song_title, recorded_at)
+      `)
+      .order('created_at', { ascending: false })
+
+    if (filters?.studentId) {
+      query = query.eq('student_id', filters.studentId)
+    }
+
+    if (filters?.instructorId) {
+      query = query.eq('instructor_id', filters.instructorId)
+    }
+
+    if (filters?.videoRecordId) {
+      query = query.eq('video_record_id', filters.videoRecordId)
+    }
+
+    if (filters?.dateFrom) {
+      query = query.gte('created_at', filters.dateFrom)
+    }
+
+    if (filters?.dateTo) {
+      query = query.lte('created_at', filters.dateTo)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      throw error
+    }
+
+    // データを EvaluationHistory 形式にマップ
+    const mappedData = (data || []).map(item => ({
+      id: item.id,
+      studentName: item.students?.name || 'Unknown',
+      instructorName: item.instructors?.name || 'Unknown',
+      songTitle: item.video_records?.song_title || 'Unknown',
+      recordedAt: item.video_records?.recorded_at || '',
+      evaluatedAt: item.created_at,
+      scores: {
+        pitch: item.pitch,
+        rhythm: item.rhythm,
+        expression: item.expression,
+        technique: item.technique
+      },
+      comments: {
+        pitch: item.pitch_comment || '',
+        rhythm: item.rhythm_comment || '',
+        expression: item.expression_comment || '',
+        technique: item.technique_comment || ''
+      },
+      totalScore: item.pitch + item.rhythm + item.expression + item.technique
+    }))
+
+    return {
+      success: true,
+      data: mappedData,
+      message: '評価履歴を取得しました'
+    }
+  } catch (error) {
+    console.error('Error fetching evaluation history:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '評価履歴の取得に失敗しました'
+    }
+  }
+}
+
+export async function getEvaluationStats(filters?: EvaluationFilters): Promise<ApiResponse<EvaluationStats>> {
+  try {
+    let query = supabase
+      .from('evaluations_v2')
+      .select(`
+        pitch,
+        rhythm,
+        expression,
+        technique,
+        created_at,
+        video_records:video_record_id (song_title)
+      `)
+
+    if (filters?.studentId) {
+      query = query.eq('student_id', filters.studentId)
+    }
+
+    if (filters?.instructorId) {
+      query = query.eq('instructor_id', filters.instructorId)
+    }
+
+    if (filters?.dateFrom) {
+      query = query.gte('created_at', filters.dateFrom)
+    }
+
+    if (filters?.dateTo) {
+      query = query.lte('created_at', filters.dateTo)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      throw error
+    }
+
+    if (!data || data.length === 0) {
+      return {
+        success: true,
+        data: {
+          totalEvaluations: 0,
+          averageScore: 0,
+          averageScoresByCategory: { pitch: 0, rhythm: 0, expression: 0, technique: 0 },
+          evaluationsByDate: [],
+          topPerformingSongs: []
+        },
+        message: '評価統計を取得しました'
+      }
+    }
+
+    // 基本統計の計算
+    const totalEvaluations = data.length
+    const totalScore = data.reduce((sum, item) => 
+      sum + item.pitch + item.rhythm + item.expression + item.technique, 0
+    )
+    const averageScore = totalScore / totalEvaluations
+
+    // カテゴリ別平均スコアの計算
+    const categoryTotals = data.reduce((acc, item) => ({
+      pitch: acc.pitch + item.pitch,
+      rhythm: acc.rhythm + item.rhythm,
+      expression: acc.expression + item.expression,
+      technique: acc.technique + item.technique
+    }), { pitch: 0, rhythm: 0, expression: 0, technique: 0 })
+
+    const averageScoresByCategory = {
+      pitch: categoryTotals.pitch / totalEvaluations,
+      rhythm: categoryTotals.rhythm / totalEvaluations,
+      expression: categoryTotals.expression / totalEvaluations,
+      technique: categoryTotals.technique / totalEvaluations
+    }
+
+    // 日付別評価数の計算
+    const evaluationsByDate = data.reduce((acc, item) => {
+      const date = new Date(item.created_at).toISOString().split('T')[0]
+      const existing = acc.find(e => e.date === date)
+      const totalScore = item.pitch + item.rhythm + item.expression + item.technique
+      
+      if (existing) {
+        existing.count += 1
+        existing.averageScore = (existing.averageScore * (existing.count - 1) + totalScore) / existing.count
+      } else {
+        acc.push({
+          date,
+          count: 1,
+          averageScore: totalScore
+        })
+      }
+      return acc
+    }, [] as Array<{ date: string; count: number; averageScore: number }>)
+
+    // 楽曲別パフォーマンスの計算
+    const songPerformance = data.reduce((acc, item) => {
+      const songTitle = item.video_records?.song_title || 'Unknown'
+      const totalScore = item.pitch + item.rhythm + item.expression + item.technique
+      
+      if (acc[songTitle]) {
+        acc[songTitle].count += 1
+        acc[songTitle].totalScore += totalScore
+      } else {
+        acc[songTitle] = {
+          count: 1,
+          totalScore: totalScore
+        }
+      }
+      return acc
+    }, {} as Record<string, { count: number; totalScore: number }>)
+
+    const topPerformingSongs = Object.entries(songPerformance)
+      .map(([songTitle, data]) => ({
+        songTitle,
+        count: data.count,
+        averageScore: data.totalScore / data.count
+      }))
+      .sort((a, b) => b.averageScore - a.averageScore)
+      .slice(0, 5)
+
+    return {
+      success: true,
+      data: {
+        totalEvaluations,
+        averageScore,
+        averageScoresByCategory,
+        evaluationsByDate: evaluationsByDate.sort((a, b) => a.date.localeCompare(b.date)),
+        topPerformingSongs
+      },
+      message: '評価統計を取得しました'
+    }
+  } catch (error) {
+    console.error('Error fetching evaluation stats:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '評価統計の取得に失敗しました'
     }
   }
 }

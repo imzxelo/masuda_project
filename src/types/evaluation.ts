@@ -57,4 +57,32 @@ export interface EvaluationFilters {
   dateTo?: string
 }
 
+export interface EvaluationHistory {
+  id: string
+  studentName: string
+  instructorName: string
+  songTitle: string
+  recordedAt: string
+  evaluatedAt: string
+  scores: EvaluationScore
+  comments: EvaluationComments
+  totalScore: number
+}
+
+export interface EvaluationStats {
+  totalEvaluations: number
+  averageScore: number
+  averageScoresByCategory: EvaluationScore
+  evaluationsByDate: Array<{
+    date: string
+    count: number
+    averageScore: number
+  }>
+  topPerformingSongs: Array<{
+    songTitle: string
+    count: number
+    averageScore: number
+  }>
+}
+
 export type EvaluationStatus = 'draft' | 'completed' | 'sent' | 'error'
