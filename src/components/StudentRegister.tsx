@@ -13,7 +13,7 @@ export default function StudentRegister({ onSuccess, onCancel }: StudentRegister
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    grade: ''
+    notes: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
@@ -60,12 +60,12 @@ export default function StudentRegister({ onSuccess, onCancel }: StudentRegister
       const result = await createStudent({
         name: formData.name.trim(),
         email: formData.email.trim() || undefined,
-        grade: formData.grade.trim() || undefined,
+        notes: formData.notes.trim() || undefined,
         isActive: true
       })
 
       if (result.success) {
-        setFormData({ name: '', email: '', grade: '' })
+        setFormData({ name: '', email: '', notes: '' })
         onSuccess()
       } else {
         if (result.error?.includes('duplicate') || result.error?.includes('unique')) {
@@ -112,8 +112,8 @@ export default function StudentRegister({ onSuccess, onCancel }: StudentRegister
                   <dd className="text-base text-gray-900">{formData.email || '未設定'}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-700">学年</dt>
-                  <dd className="text-base text-gray-900">{formData.grade || '未設定'}</dd>
+                  <dt className="text-sm font-medium text-gray-700">備考</dt>
+                  <dd className="text-base text-gray-900">{formData.notes || '未設定'}</dd>
                 </div>
                 <div>
                   <dt className="text-sm font-medium text-gray-700">ステータス</dt>
@@ -135,7 +135,7 @@ export default function StudentRegister({ onSuccess, onCancel }: StudentRegister
               <ul className="text-sm text-yellow-700 space-y-1">
                 <li>• 登録後は即座に生徒選択画面に表示されます</li>
                 <li>• メールアドレスは任意ですが、入力する場合は重複できません</li>
-                <li>• 学年は自由記述で入力できます</li>
+                <li>• 備考は同姓同名の生徒を識別するために使用できます</li>
                 <li>• 登録後の情報変更はデータベースから直接行ってください</li>
               </ul>
             </div>
@@ -221,17 +221,17 @@ export default function StudentRegister({ onSuccess, onCancel }: StudentRegister
             )}
           </div>
 
-          {/* 学年入力 */}
+          {/* 備考入力 */}
           <div>
-            <label htmlFor="grade" className="block text-sm font-medium text-gray-700 mb-1">
-              学年 <span className="text-gray-400">(任意)</span>
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+              備考 <span className="text-gray-400">(任意)</span>
             </label>
             <Input
-              id="grade"
+              id="notes"
               type="text"
-              value={formData.grade}
-              onChange={handleInputChange('grade')}
-              placeholder="例: 高校2年, 中学3年"
+              value={formData.notes}
+              onChange={handleInputChange('notes')}
+              placeholder="例: 月曜日クラス, 初心者コース"
               disabled={isSubmitting}
             />
           </div>
@@ -242,7 +242,7 @@ export default function StudentRegister({ onSuccess, onCancel }: StudentRegister
             <ul className="text-sm text-blue-700 space-y-1">
               <li>• 登録後は即座に生徒選択画面に表示されます</li>
               <li>• メールアドレスは任意ですが、入力する場合は重複できません</li>
-              <li>• 学年は自由記述で入力できます</li>
+              <li>• 備考は同姓同名の生徒を識別するために使用できます</li>
               <li>• 登録後の情報変更はデータベースから直接行ってください</li>
             </ul>
           </div>

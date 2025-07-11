@@ -15,7 +15,7 @@ export default function StudentEdit({ student, onSuccess, onCancel }: StudentEdi
   const [formData, setFormData] = useState({
     name: student.name,
     email: student.email || '',
-    grade: student.grade || ''
+    notes: student.notes || ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
@@ -56,7 +56,7 @@ export default function StudentEdit({ student, onSuccess, onCancel }: StudentEdi
     const hasChanges = 
       formData.name !== student.name ||
       formData.email !== (student.email || '') ||
-      formData.grade !== (student.grade || '')
+      formData.notes !== (student.notes || '')
 
     if (!hasChanges) {
       setErrors({ general: '変更内容がありません' })
@@ -73,7 +73,7 @@ export default function StudentEdit({ student, onSuccess, onCancel }: StudentEdi
       const result = await updateStudent(student.id, {
         name: formData.name.trim(),
         email: formData.email.trim() || undefined,
-        grade: formData.grade.trim() || undefined,
+        notes: formData.notes.trim() || undefined,
         isActive: student.isActive
       })
 
@@ -143,17 +143,17 @@ export default function StudentEdit({ student, onSuccess, onCancel }: StudentEdi
                   )}
                 </div>
 
-                {/* 学年 */}
+                {/* 備考 */}
                 <div>
-                  <dt className="text-sm font-medium text-gray-700">学年</dt>
-                  {formData.grade !== (student.grade || '') ? (
+                  <dt className="text-sm font-medium text-gray-700">備考</dt>
+                  {formData.notes !== (student.notes || '') ? (
                     <div className="flex items-center space-x-2">
-                      <dd className="text-sm text-red-600 line-through">{student.grade || '未設定'}</dd>
+                      <dd className="text-sm text-red-600 line-through">{student.notes || '未設定'}</dd>
                       <span className="text-sm text-gray-500">→</span>
-                      <dd className="text-sm text-green-600 font-medium">{formData.grade || '未設定'}</dd>
+                      <dd className="text-sm text-green-600 font-medium">{formData.notes || '未設定'}</dd>
                     </div>
                   ) : (
-                    <dd className="text-base text-gray-900">{formData.grade || '未設定'}</dd>
+                    <dd className="text-base text-gray-900">{formData.notes || '未設定'}</dd>
                   )}
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function StudentEdit({ student, onSuccess, onCancel }: StudentEdi
               <ul className="text-sm text-yellow-700 space-y-1">
                 <li>• 更新後は即座に生徒選択画面に反映されます</li>
                 <li>• メールアドレスは任意ですが、入力する場合は重複できません</li>
-                <li>• 学年は自由記述で入力できます</li>
+                <li>• 備考は同姓同名の生徒を識別するために使用できます</li>
               </ul>
             </div>
           </div>
@@ -257,17 +257,17 @@ export default function StudentEdit({ student, onSuccess, onCancel }: StudentEdi
             )}
           </div>
 
-          {/* 学年入力 */}
+          {/* 備考入力 */}
           <div>
-            <label htmlFor="grade" className="block text-sm font-medium text-gray-700 mb-1">
-              学年 <span className="text-gray-400">(任意)</span>
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+              備考 <span className="text-gray-400">(任意)</span>
             </label>
             <Input
-              id="grade"
+              id="notes"
               type="text"
-              value={formData.grade}
-              onChange={handleInputChange('grade')}
-              placeholder="例: 高校2年, 中学3年"
+              value={formData.notes}
+              onChange={handleInputChange('notes')}
+              placeholder="例: 月曜日クラス, 初心者コース"
               disabled={isSubmitting}
             />
           </div>
@@ -278,7 +278,7 @@ export default function StudentEdit({ student, onSuccess, onCancel }: StudentEdi
             <ul className="text-sm text-blue-700 space-y-1">
               <li>• 更新後は即座に生徒選択画面に反映されます</li>
               <li>• メールアドレスは任意ですが、入力する場合は重複できません</li>
-              <li>• 学年は自由記述で入力できます</li>
+              <li>• 備考は同姓同名の生徒を識別するために使用できます</li>
             </ul>
           </div>
 

@@ -19,7 +19,7 @@ export async function getStudents(): Promise<ApiResponse<Student[]>> {
       id: item.id,
       name: item.name,
       email: item.email,
-      grade: item.grade,
+      notes: item.notes,
       isActive: item.is_active,
       createdAt: item.created_at,
       updatedAt: item.created_at
@@ -142,7 +142,7 @@ export async function createStudent(student: Omit<Student, 'id' | 'createdAt' | 
       .insert({
         name: student.name,
         email: student.email,
-        grade: student.grade,
+        notes: student.notes,
         is_active: student.isActive
       })
       .select()
@@ -157,7 +157,7 @@ export async function createStudent(student: Omit<Student, 'id' | 'createdAt' | 
       id: data.id,
       name: data.name,
       email: data.email,
-      grade: data.grade,
+      notes: data.notes,
       isActive: data.is_active,
       createdAt: data.created_at,
       updatedAt: data.created_at
@@ -186,7 +186,7 @@ export async function updateStudent(
     
     if (updates.name !== undefined) updateData.name = updates.name
     if (updates.email !== undefined) updateData.email = updates.email
-    if (updates.grade !== undefined) updateData.grade = updates.grade
+    if (updates.notes !== undefined) updateData.notes = updates.notes
     if (updates.isActive !== undefined) updateData.is_active = updates.isActive
 
     console.log('Updating student with ID:', id)
@@ -242,7 +242,7 @@ export async function updateStudent(
       id: updatedData.id,
       name: updatedData.name,
       email: updatedData.email,
-      grade: updatedData.grade,
+      notes: updatedData.notes,
       isActive: updatedData.is_active,
       createdAt: updatedData.created_at,
       updatedAt: updatedData.updated_at
@@ -280,7 +280,7 @@ export async function searchStudents(query: string): Promise<ApiResponse<Student
       id: item.id,
       name: item.name,
       email: item.email,
-      grade: item.grade,
+      notes: item.notes,
       isActive: item.is_active,
       createdAt: item.created_at,
       updatedAt: item.created_at

@@ -284,9 +284,9 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
                         )}
                       </div>
                       <div className="flex items-center space-x-2">
-                        {student.grade && (
+                        {student.notes && (
                           <span className="text-xs bg-gray-200 px-2 py-1 rounded">
-                            {student.grade}
+                            {student.notes}
                           </span>
                         )}
                         {selectedStudent?.id === student.id && (
@@ -329,8 +329,8 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
                 {selectedStudent.email && (
                   <div className="text-sm text-blue-600">{selectedStudent.email}</div>
                 )}
-                {selectedStudent.grade && (
-                  <div className="text-sm text-blue-600">学年: {selectedStudent.grade}</div>
+                {selectedStudent.notes && (
+                  <div className="text-sm text-blue-600">備考: {selectedStudent.notes}</div>
                 )}
               </div>
               <div className="flex items-center space-x-2">

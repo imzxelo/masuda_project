@@ -2,7 +2,7 @@ export interface Student {
   id: string
   name: string
   email?: string
-  grade?: string
+  notes?: string  // 備考（旧grade）
   isActive: boolean
   createdAt: string
   updatedAt: string
