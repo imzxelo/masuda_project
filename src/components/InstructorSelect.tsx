@@ -5,7 +5,7 @@ import { Instructor, InstructorSession } from '@/types/instructor'
 
 interface InstructorSelectProps {
   instructors: Instructor[]
-  onSelect: (session: InstructorSession) => void
+  onSelect: (instructor: Instructor) => void
   className?: string
 }
 
@@ -18,14 +18,10 @@ export default function InstructorSelect({ instructors, onSelect, className = ''
     if (!instructor) return
 
     setIsLoading(true)
+    setSelectedInstructor(instructorId)
     try {
-      const session: InstructorSession = {
-        instructorId: instructor.id,
-        name: instructor.name,
-        loginAt: new Date().toISOString(),
-        isActive: true
-      }
-      onSelect(session)
+      console.log('Selected instructor:', instructor)
+      onSelect(instructor)
     } finally {
       setIsLoading(false)
     }

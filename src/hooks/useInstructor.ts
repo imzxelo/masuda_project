@@ -42,6 +42,9 @@ export function useInstructor() {
 
   const authenticate = useCallback(async (instructor: Instructor): Promise<boolean> => {
     try {
+      // まず古いセッションをクリア
+      clearSession()
+      
       const session: InstructorSession = {
         instructorId: instructor.id,
         name: instructor.name,
@@ -49,7 +52,13 @@ export function useInstructor() {
         isActive: true
       }
 
+      console.log('Creating new session:', session)
       setSession(session)
+      
+      // セッション設定後の確認
+      setTimeout(() => {
+        console.log('Session after setting:', session)
+      }, 100)
       
       addToast({
         type: 'success',
@@ -66,7 +75,7 @@ export function useInstructor() {
       })
       return false
     }
-  }, [setSession, addToast, setError])
+  }, [setSession, clearSession, addToast, setError])
 
   const logout = useCallback(() => {
     clearSession()
@@ -112,8 +121,11 @@ export function useInstructor() {
 
   // Auto-load stats when authenticated
   useEffect(() => {
-    if (isAuthenticated && session) {
+    if (isAuthenticated && session && session.instructorId) {
+      console.log('Loading instructor stats for:', session.instructorId)
       loadInstructorStats(session.instructorId)
+    } else {
+      console.log('Session state:', { isAuthenticated, session })
     }
   }, [isAuthenticated, session, loadInstructorStats])
 

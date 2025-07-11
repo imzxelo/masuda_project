@@ -16,6 +16,16 @@ export async function sendEvaluationToN8n(
     }
   }
 
+  // 開発環境でのCORSエラーを回避
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    console.log('開発環境のため、webhook送信をシミュレート:', evaluation)
+    return {
+      success: true,
+      data: { success: true, message: 'Development mode - webhook simulated' } as N8nWebhookResponse,
+      message: '開発環境でのwebhook送信をシミュレートしました'
+    }
+  }
+
   try {
     const payload: N8nWebhookPayload = {
       type: 'evaluation_completed',

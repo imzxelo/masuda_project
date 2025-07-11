@@ -14,9 +14,20 @@ export async function getStudents(): Promise<ApiResponse<Student[]>> {
       throw error
     }
 
+    // データベースのsnake_caseをcamelCaseにマップ
+    const mappedData = (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      email: item.email,
+      grade: item.grade,
+      isActive: item.is_active,
+      createdAt: item.created_at,
+      updatedAt: item.created_at
+    }))
+
     return {
       success: true,
-      data: data || [],
+      data: mappedData,
       message: '生徒一覧を取得しました'
     }
   } catch (error) {
@@ -64,8 +75,8 @@ export async function getStudentWithStats(id: string): Promise<ApiResponse<Stude
 
     // Get evaluation stats
     const { data: evaluations, error: evalError } = await supabase
-      .from('evaluations')
-      .select('scores, created_at')
+      .from('evaluations_v2')
+      .select('pitch, rhythm, expression, technique, created_at')
       .eq('student_id', id)
 
     if (evalError) {
@@ -79,12 +90,11 @@ export async function getStudentWithStats(id: string): Promise<ApiResponse<Stude
       const totalEvaluations = evaluations.length
       const averageScores = evaluations.reduce(
         (acc, evaluation) => {
-          const scores = evaluation.scores as any
           return {
-            pitch: acc.pitch + scores.pitch,
-            rhythm: acc.rhythm + scores.rhythm,
-            expression: acc.expression + scores.expression,
-            technique: acc.technique + scores.technique,
+            pitch: acc.pitch + evaluation.pitch,
+            rhythm: acc.rhythm + evaluation.rhythm,
+            expression: acc.expression + evaluation.expression,
+            technique: acc.technique + evaluation.technique,
           }
         },
         { pitch: 0, rhythm: 0, expression: 0, technique: 0 }
@@ -142,9 +152,20 @@ export async function createStudent(student: Omit<Student, 'id' | 'createdAt' | 
       throw error
     }
 
+    // データベースのsnake_caseをcamelCaseにマップ
+    const mappedData = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      grade: data.grade,
+      isActive: data.is_active,
+      createdAt: data.created_at,
+      updatedAt: data.created_at
+    }
+
     return {
       success: true,
-      data,
+      data: mappedData,
       message: '生徒を作成しました'
     }
   } catch (error) {
@@ -206,9 +227,20 @@ export async function searchStudents(query: string): Promise<ApiResponse<Student
       throw error
     }
 
+    // データベースのsnake_caseをcamelCaseにマップ
+    const mappedData = (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      email: item.email,
+      grade: item.grade,
+      isActive: item.is_active,
+      createdAt: item.created_at,
+      updatedAt: item.created_at
+    }))
+
     return {
       success: true,
-      data: data || [],
+      data: mappedData,
       message: '生徒検索結果を取得しました'
     }
   } catch (error) {

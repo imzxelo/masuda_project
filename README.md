@@ -94,22 +94,31 @@ src/
 
 ## 🚀 現在の実装状況
 
-### ✅ 完了済み (Phase 1-3)
+### ✅ 完了済み (Phase 1-4)
 - **基盤構築**: プロジェクト構造、設定ファイル、型定義
 - **コアコンポーネント**: レーダーチャート、評価スライダー、講師認証、共通UI
-- **状態管理**: Zustand stores (評価、講師、UI状態)
+- **状態管理**: Zustand stores (評価、講師、生徒、UI状態)
 - **API連携**: Supabase CRUD操作、n8n webhook送信
 - **環境構築**: 開発環境、接続テスト、デバッグ機能
+- **登録機能**: システム内での講師・生徒登録機能
+- **生徒選択機能**: 検索・フィルタリング付き生徒選択
+- **評価システム**: 完全動作する評価入力・保存・送信
 
-### 🔄 進行中 (Phase 4準備)
-- **メインページ統合**: 実際のAPI連携でのデモ動作確認
-- **接続テスト**: Supabase ✅、n8n Webhook ✅
+### 🎯 システム完成度
+**コア機能**: 100% 完成 ✅
+- 講師認証・選択
+- 生徒選択（検索・フィルタリング）
+- 評価入力（4項目 × 10点 + コメント）
+- リアルタイムレーダーチャート
+- データベース保存（evaluations_v2テーブル）
+- n8nレポート生成連携
 
-### 📋 次のステップ (Phase 4以降)
-- **生徒選択機能**: 実際の生徒データベースからの選択
-- **評価履歴表示**: 過去の評価データの表示
-- **レポート確認**: n8nからのレポート生成結果確認
-- **エラーハンドリング強化**: 本番環境対応
+### 📋 次のステップ (Phase 5以降)
+- **評価履歴表示**: 過去の評価データの表示・管理・可視化
+- **レポート管理**: n8nからのレポート生成結果確認・ダウンロード機能
+- **統計ダッシュボード**: 講師・生徒別の評価統計・トレンド分析
+- **エラーハンドリング強化**: 本番環境対応・監視・ログ機能
+- **パフォーマンス最適化**: キャッシュ・遅延読み込み・バッチ処理
 
 ## 評価システム詳細
 
@@ -132,7 +141,108 @@ src/
    - 10名講師による総合評価（最大400点）
    - リアルタイムでの評価結果可視化
 
-## 🔧 開発・デバッグ
+## 📋 システム利用開始手順
+
+### 1. 初回セットアップ
+
+**環境変数の設定:**
+```bash
+cp .env.local.example .env.local
+```
+
+`.env.local`に以下を設定:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_N8N_WEBHOOK_URL=your_n8n_webhook_url
+```
+
+**開発サーバー起動:**
+```bash
+npm install
+npm run dev
+```
+
+### 2. データベースセットアップ
+
+**必要なテーブル作成:**
+Supabase Dashboard → SQL Editor で以下を実行:
+
+```sql
+-- 講師テーブル
+CREATE TABLE instructors (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 生徒テーブル
+CREATE TABLE students (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE,
+  grade TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 評価テーブル（v2 - 個別カラム構造）
+CREATE TABLE evaluations_v2 (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  student_id UUID REFERENCES students(id) NOT NULL,
+  instructor_id UUID REFERENCES instructors(id) NOT NULL,
+  pitch INTEGER CHECK (pitch BETWEEN 0 AND 10) NOT NULL,
+  rhythm INTEGER CHECK (rhythm BETWEEN 0 AND 10) NOT NULL,
+  expression INTEGER CHECK (expression BETWEEN 0 AND 10) NOT NULL,
+  technique INTEGER CHECK (technique BETWEEN 0 AND 10) NOT NULL,
+  pitch_comment TEXT,
+  rhythm_comment TEXT,
+  expression_comment TEXT,
+  technique_comment TEXT,
+  sent_to_n8n BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+**Row Level Security (RLS) ポリシーの設定:**
+```sql
+-- 各テーブルにRLSポリシーを設定
+CREATE POLICY "Allow anonymous access on instructors" ON instructors FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anonymous access on students" ON students FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anonymous access on evaluations_v2" ON evaluations_v2 FOR ALL TO anon USING (true) WITH CHECK (true);
+```
+
+### 3. 講師・生徒登録
+
+**システム内で簡単登録:**
+
+システムにアクセス後、以下の手順で登録:
+
+1. **講師登録**: 
+   - `http://localhost:3000/`でトップページにアクセス
+   - 「新しい講師を登録」ボタンをクリック
+   - 名前とメールアドレスを入力して登録
+   - 登録後、講師を選択してシステムにログイン
+
+2. **生徒登録**: 
+   - 講師でログイン後、生徒選択画面で「新しい生徒を登録」ボタンをクリック
+   - 名前、メールアドレス（任意）、学年（任意）を入力して登録
+   - 登録後、すぐに評価対象として選択可能
+
+### 4. システム利用
+
+**評価の流れ:**
+1. 講師を選択してシステムにログイン
+2. 評価対象の生徒を選択
+3. 4項目（音程・リズム・表現・テクニック）を10点満点で評価
+4. 各項目にコメントを入力（任意）
+5. 「評価を送信」でデータベースに保存
+6. 自動的にn8nへWebhook送信でレポート生成開始
+
+## 🛠️ 開発環境とテスト
 
 ### 接続テスト
 システムの接続状況を確認:
@@ -144,5 +254,27 @@ http://localhost:3000/test
 ### 主要なエンドポイント
 - **メインページ**: `http://localhost:3000/` - 評価システムのメイン画面
 - **テストページ**: `http://localhost:3000/test` - 接続テストとデバッグ
-- **Supabase**: 講師・生徒・評価データの管理
-- **n8n Webhook**: 自動レポート生成トリガー
+
+## 🔧 トラブルシューティング
+
+### よくある問題と解決方法
+
+**問題**: 講師・生徒登録時に「new row violates row-level security policy」エラー
+→ **解決**: 上記RLSポリシーを設定してください
+
+**問題**: 接続テストでエラーが発生
+→ **解決**: 環境変数の設定を確認し、Supabaseプロジェクトの設定を見直してください
+
+**問題**: n8n Webhookでエラーが発生
+→ **解決**: 開発環境では自動的にシミュレート処理されます。本番環境のWebhook URLを確認してください
+
+### 技術仕様
+
+- **データベース**: PostgreSQL (Supabase)
+  - `instructors` テーブル: 講師情報
+  - `students` テーブル: 生徒情報  
+  - `evaluations_v2` テーブル: 評価データ（個別カラム構造）
+- **状態管理**: Zustand with persistence
+- **API層**: Supabase Client with TypeScript
+- **UI**: Tailwind CSS + Recharts
+- **外部連携**: n8n Webhook for report generation

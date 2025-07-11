@@ -102,27 +102,27 @@ export default function ConnectionTest() {
 
   const getStatusIcon = (connectionStatus: string) => {
     switch (connectionStatus) {
-      case 'success':
-        return <span className="text-green-500">✓</span>
-      case 'error':
-        return <span className="text-red-500">✗</span>
-      case 'testing':
-        return <LoadingSpinner size="sm" />
-      default:
-        return <span className="text-gray-400">○</span>
+    case 'success':
+      return <span className="text-green-500">✓</span>
+    case 'error':
+      return <span className="text-red-500">✗</span>
+    case 'testing':
+      return <LoadingSpinner size="sm" />
+    default:
+      return <span className="text-gray-400">○</span>
     }
   }
 
   const getStatusColor = (connectionStatus: string) => {
     switch (connectionStatus) {
-      case 'success':
-        return 'text-green-600'
-      case 'error':
-        return 'text-red-600'
-      case 'testing':
-        return 'text-blue-600'
-      default:
-        return 'text-gray-600'
+    case 'success':
+      return 'text-green-600'
+    case 'error':
+      return 'text-red-600'
+    case 'testing':
+      return 'text-blue-600'
+    default:
+      return 'text-gray-600'
     }
   }
 

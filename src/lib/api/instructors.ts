@@ -14,9 +14,19 @@ export async function getInstructors(): Promise<ApiResponse<Instructor[]>> {
       throw error
     }
 
+    // データベースのsnake_caseをcamelCaseにマップ
+    const mappedData = (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      email: item.email,
+      isActive: item.is_active,
+      createdAt: item.created_at,
+      updatedAt: item.created_at // updated_atがない場合はcreated_atを使用
+    }))
+
     return {
       success: true,
-      data: data || [],
+      data: mappedData,
       message: '講師一覧を取得しました'
     }
   } catch (error) {
@@ -40,9 +50,19 @@ export async function getInstructorById(id: string): Promise<ApiResponse<Instruc
       throw error
     }
 
+    // データベースのsnake_caseをcamelCaseにマップ
+    const mappedData = data ? {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      isActive: data.is_active,
+      createdAt: data.created_at,
+      updatedAt: data.created_at
+    } : null
+
     return {
       success: true,
-      data,
+      data: mappedData,
       message: '講師情報を取得しました'
     }
   } catch (error) {
@@ -56,9 +76,13 @@ export async function getInstructorById(id: string): Promise<ApiResponse<Instruc
 
 export async function getInstructorStats(instructorId: string): Promise<ApiResponse<InstructorStats>> {
   try {
+    if (!instructorId || instructorId === 'undefined') {
+      throw new Error('講師IDが指定されていません')
+    }
+    
     const { data, error } = await supabase
-      .from('evaluations')
-      .select('scores, created_at')
+      .from('evaluations_v2')
+      .select('pitch, rhythm, expression, technique, created_at')
       .eq('instructor_id', instructorId)
 
     if (error) {
@@ -80,12 +104,11 @@ export async function getInstructorStats(instructorId: string): Promise<ApiRespo
     const totalEvaluations = data.length
     const averageScores = data.reduce(
       (acc, evaluation) => {
-        const scores = evaluation.scores as any
         return {
-          pitch: acc.pitch + scores.pitch,
-          rhythm: acc.rhythm + scores.rhythm,
-          expression: acc.expression + scores.expression,
-          technique: acc.technique + scores.technique,
+          pitch: acc.pitch + evaluation.pitch,
+          rhythm: acc.rhythm + evaluation.rhythm,
+          expression: acc.expression + evaluation.expression,
+          technique: acc.technique + evaluation.technique,
         }
       },
       { pitch: 0, rhythm: 0, expression: 0, technique: 0 }
@@ -137,9 +160,19 @@ export async function createInstructor(instructor: Omit<Instructor, 'id' | 'crea
       throw error
     }
 
+    // データベースのsnake_caseをcamelCaseにマップ
+    const mappedData = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      isActive: data.is_active,
+      createdAt: data.created_at,
+      updatedAt: data.created_at
+    }
+
     return {
       success: true,
-      data,
+      data: mappedData,
       message: '講師を作成しました'
     }
   } catch (error) {
@@ -173,9 +206,19 @@ export async function updateInstructor(
       throw error
     }
 
+    // データベースのsnake_caseをcamelCaseにマップ
+    const mappedData = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      isActive: data.is_active,
+      createdAt: data.created_at,
+      updatedAt: data.created_at
+    }
+
     return {
       success: true,
-      data,
+      data: mappedData,
       message: '講師情報を更新しました'
     }
   } catch (error) {
