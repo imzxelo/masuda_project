@@ -6,13 +6,14 @@ import EvaluationSlider from '@/components/EvaluationSlider'
 import InstructorSelect from '@/components/InstructorSelect'
 import StudentSelect from '@/components/StudentSelect'
 import InstructorRegister from '@/components/InstructorRegister'
-import VideoRecordSelect from '@/components/VideoRecordSelect'
-import VideoRecordRegister from '@/components/VideoRecordRegister'
+import { VideoRecordSelect } from '@/components/VideoRecordSelect'
+import { VideoRecordRegister } from '@/components/VideoRecordRegister'
 import { Card, Button, LoadingSpinner, ToastProvider } from '@/components/ui'
 import { EvaluationScore, EvaluationComments, InstructorSession } from '@/types'
 import { VideoRecord } from '@/types/video-record'
 import { useInstructor, useEvaluation } from '@/hooks'
-import { useEvaluationStore, useStudentStore, useVideoRecordStore } from '@/stores'
+import { useEvaluationStore, useStudentStore } from '@/stores'
+// import { useVideoRecordStore } from '@/stores'
 
 export default function Home() {
   // Hooks
@@ -33,7 +34,7 @@ export default function Home() {
     updateScores, 
     updateComments, 
     setStudentId,
-    setVideoRecordId,
+    // setVideoRecordId,
     isSubmitting 
   } = useEvaluationStore()
   
@@ -43,11 +44,13 @@ export default function Home() {
     clearSelectedStudent 
   } = useStudentStore()
   
-  const { 
-    selectedVideoRecord, 
-    setSelectedVideoRecord, 
-    clearVideoRecords 
-  } = useVideoRecordStore()
+  // const { 
+  //   selectedVideoRecord, 
+  //   setSelectedVideoRecord, 
+  //   clearVideoRecords 
+  // } = useVideoRecordStore()
+  
+  const [selectedVideoRecord, setSelectedVideoRecord] = useState<VideoRecord | null>(null)
   
   const [showRegisterForm, setShowRegisterForm] = useState(false)
   const [showVideoRegisterForm, setShowVideoRegisterForm] = useState(false)
@@ -58,10 +61,10 @@ export default function Home() {
     if (selectedStudent) {
       setStudentId(selectedStudent.id)
     }
-    if (selectedVideoRecord) {
-      setVideoRecordId(selectedVideoRecord.id)
-    }
-  }, [updateScores, setStudentId, selectedStudent, setVideoRecordId, selectedVideoRecord])
+    // if (selectedVideoRecord) {
+    //   setVideoRecordId(selectedVideoRecord.id)
+    // }
+  }, [updateScores, setStudentId, selectedStudent])
 
   const handleEvaluationChange = (newScores: EvaluationScore, newComments: EvaluationComments) => {
     updateScores(newScores)
@@ -75,7 +78,7 @@ export default function Home() {
   const handleLogout = () => {
     logout()
     clearSelectedStudent()
-    clearVideoRecords()
+    // clearVideoRecords()
   }
 
   const handleStudentSelect = (student: any) => {
@@ -94,7 +97,8 @@ export default function Home() {
 
   const handleVideoRegisterSuccess = () => {
     setShowVideoRegisterForm(false)
-    // 動画レコードリストが自動で更新されるのを待つ
+    // 動画レコードリストを再読み込み
+    // VideoRecordSelectコンポーネントが自動で更新されるはず
   }
 
   const handleVideoRegisterCancel = () => {
@@ -137,18 +141,18 @@ export default function Home() {
       return
     }
     
-    if (!selectedVideoRecord) {
-      console.error('No video record selected')
-      return
-    }
+    // if (!selectedVideoRecord) {
+    //   console.error('No video record selected')
+    //   return
+    // }
     
     console.log('Submitting evaluation:', {
       instructorId: session.instructorId,
       studentId: selectedStudent.id,
-      videoRecordId: selectedVideoRecord.id,
+      // videoRecordId: selectedVideoRecord.id,
       session,
       selectedStudent,
-      selectedVideoRecord
+      // selectedVideoRecord
     })
     
     const success = await submitEvaluation(session.instructorId)
@@ -236,9 +240,9 @@ export default function Home() {
                 {selectedStudent && (
                   <p className="text-sm text-gray-600">対象生徒: {selectedStudent.name}</p>
                 )}
-                {selectedVideoRecord && (
+                {/* {selectedVideoRecord && (
                   <p className="text-sm text-gray-600">対象動画: {selectedVideoRecord.songTitle}</p>
-                )}
+                )} */}
                 <Button
                   variant="outline"
                   size="sm"
@@ -277,7 +281,7 @@ export default function Home() {
               </div>
             )}
 
-            {selectedStudent && selectedVideoRecord && (
+            {selectedStudent && (
               <div className="mb-6 space-y-4">
                 <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-200">
                   <div>
@@ -299,7 +303,7 @@ export default function Home() {
                   </Button>
                 </div>
                 
-                <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg border border-green-200">
+                {/* <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg border border-green-200">
                   <div>
                     <h3 className="text-lg font-semibold text-green-800">採点対象動画</h3>
                     <p className="text-green-700">{selectedVideoRecord.songTitle}</p>
@@ -317,11 +321,11 @@ export default function Home() {
                   >
                     動画を変更
                   </Button>
-                </div>
+                </div> */}
               </div>
             )}
 
-            {selectedStudent && selectedVideoRecord && (
+            {selectedStudent && (
               <>
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                   <Card>
@@ -392,7 +396,7 @@ export default function Home() {
                     size="lg"
                     onClick={handleSubmitEvaluation}
                     isLoading={isSubmitting}
-                    disabled={isSubmitting || !selectedStudent || !selectedVideoRecord}
+                    disabled={isSubmitting || !selectedStudent}
                   >
                     {isSubmitting ? '送信中...' : '評価を送信'}
                   </Button>

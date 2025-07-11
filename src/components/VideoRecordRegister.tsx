@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { useVideoRecord } from '@/hooks'
 import { VideoRecordInput } from '@/types/video-record'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
+import Button from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
+import Input from '@/components/ui/Input'
 
 interface VideoRecordRegisterProps {
   studentId: string
@@ -25,6 +25,7 @@ export function VideoRecordRegister({
   })
   
   const [errors, setErrors] = useState<Partial<Record<keyof typeof formData, string>>>({})
+  
   const { createVideoRecord, isLoading } = useVideoRecord()
 
   const validateForm = () => {
@@ -69,9 +70,17 @@ export function VideoRecordRegister({
       studentId
     }
 
+    console.log('Submitting video record:', input)
+    
     const result = await createVideoRecord(input)
+    
+    console.log('Video record creation result:', result)
+    
     if (result) {
+      console.log('Video record created successfully, calling onSuccess')
       onSuccess()
+    } else {
+      console.error('Video record creation failed')
     }
   }
 

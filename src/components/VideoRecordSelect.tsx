@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useVideoRecord } from '@/hooks'
 import { VideoRecord } from '@/types/video-record'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
 import { useDebounce } from '@/hooks'
 
 interface VideoRecordSelectProps {
@@ -23,24 +23,27 @@ export function VideoRecordSelect({
   const [searchQuery, setSearchQuery] = useState('')
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   
-  const {
-    videoRecords,
-    isLoading,
-    loadVideoRecordsByStudent,
-    searchVideoRecords,
-    selectVideoRecord
+  const { 
+    videoRecords, 
+    isLoading, 
+    loadVideoRecordsByStudent, 
+    searchVideoRecords, 
+    selectVideoRecord 
   } = useVideoRecord()
 
   useEffect(() => {
     if (studentId) {
+      console.log('VideoRecordSelect: Loading video records for student:', studentId)
       loadVideoRecordsByStudent(studentId)
     }
   }, [studentId, loadVideoRecordsByStudent])
 
   useEffect(() => {
     if (debouncedSearchQuery && studentId) {
+      console.log('VideoRecordSelect: Searching video records:', debouncedSearchQuery, studentId)
       searchVideoRecords(debouncedSearchQuery, studentId)
     } else if (studentId) {
+      console.log('VideoRecordSelect: Loading video records for student (no search):', studentId)
       loadVideoRecordsByStudent(studentId)
     }
   }, [debouncedSearchQuery, studentId, searchVideoRecords, loadVideoRecordsByStudent])

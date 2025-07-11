@@ -154,7 +154,7 @@ export async function createEvaluation(input: EvaluationInput): Promise<ApiRespo
     const evaluationData = {
       student_id: input.studentId,
       instructor_id: input.instructorId,
-      video_record_id: input.videoRecordId,
+      // video_record_id: input.videoRecordId,
       pitch: input.scores.pitch,
       rhythm: input.scores.rhythm,
       expression: input.scores.expression,

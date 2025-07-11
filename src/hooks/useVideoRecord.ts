@@ -56,10 +56,13 @@ export function useVideoRecord() {
 
   const loadVideoRecordsByStudent = useCallback(async (studentId: string) => {
     try {
+      console.log('Loading video records for student:', studentId)
       setIsLoading(true)
       setVideoRecordError(null)
       
       const result = await getVideoRecordsByStudent(studentId)
+      
+      console.log('Load video records result:', result)
       
       if (result.success) {
         // Convert VideoRecordListItem to VideoRecord format
@@ -73,6 +76,7 @@ export function useVideoRecord() {
           updatedAt: ''
         })) || []
         
+        console.log('Mapped video records:', videoRecords)
         setVideoRecords(videoRecords)
         return videoRecords
       } else {
@@ -80,6 +84,7 @@ export function useVideoRecord() {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '生徒の動画レコード取得に失敗しました'
+      console.error('Error loading video records:', error)
       setVideoRecordError(errorMessage)
       setError(errorMessage)
       addToast({
@@ -97,7 +102,11 @@ export function useVideoRecord() {
       setIsLoading(true)
       setVideoRecordError(null)
       
+      console.log('Creating video record with input:', input)
+      
       const result = await createVideoRecord(input)
+      
+      console.log('Create video record result:', result)
       
       if (result.success && result.data) {
         addVideoRecord(result.data)
@@ -111,6 +120,7 @@ export function useVideoRecord() {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '動画レコードの作成に失敗しました'
+      console.error('Error creating video record:', error)
       setVideoRecordError(errorMessage)
       setError(errorMessage)
       addToast({

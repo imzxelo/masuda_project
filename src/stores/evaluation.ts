@@ -6,7 +6,7 @@ interface EvaluationState {
   scores: EvaluationScore
   comments: EvaluationComments
   studentId: string
-  videoRecordId: string
+  // videoRecordId: string
   isSubmitting: boolean
   error: string | null
   
@@ -14,7 +14,7 @@ interface EvaluationState {
   updateScores: (scores: EvaluationScore) => void
   updateComments: (comments: EvaluationComments) => void
   setStudentId: (studentId: string) => void
-  setVideoRecordId: (videoRecordId: string) => void
+  // setVideoRecordId: (videoRecordId: string) => void
   setSubmitting: (isSubmitting: boolean) => void
   setError: (error: string | null) => void
   resetEvaluation: () => void
@@ -40,7 +40,7 @@ export const useEvaluationStore = create<EvaluationState>()(
     scores: initialScores,
     comments: initialComments,
     studentId: '',
-    videoRecordId: '',
+    // videoRecordId: '',
     isSubmitting: false,
     error: null,
 
@@ -50,7 +50,7 @@ export const useEvaluationStore = create<EvaluationState>()(
     
     setStudentId: (studentId) => set({ studentId }),
     
-    setVideoRecordId: (videoRecordId) => set({ videoRecordId }),
+    // setVideoRecordId: (videoRecordId) => set({ videoRecordId }),
     
     setSubmitting: (isSubmitting) => set({ isSubmitting }),
     
@@ -60,7 +60,7 @@ export const useEvaluationStore = create<EvaluationState>()(
       scores: initialScores,
       comments: initialComments,
       studentId: '',
-      videoRecordId: '',
+      // videoRecordId: '',
       isSubmitting: false,
       error: null,
     }),
@@ -69,7 +69,7 @@ export const useEvaluationStore = create<EvaluationState>()(
       const state = get()
       return {
         studentId: state.studentId,
-        videoRecordId: state.videoRecordId,
+        // videoRecordId: state.videoRecordId,
         scores: state.scores,
         comments: state.comments,
       }
