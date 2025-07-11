@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { validateEnvironmentVariables } from '../env'
 
 const env = validateEnvironmentVariables()
+
+// 通常のクライアント（匿名ユーザー向け）
 export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, {
   auth: {
     persistSession: false,
@@ -9,6 +11,17 @@ export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, {
     detectSessionInUrl: false
   }
 })
+
+// 管理者クライアント（Service Role）
+export const supabaseAdmin = env.supabaseServiceRoleKey 
+  ? createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    })
+  : null
 
 export const testSupabaseConnection = async (): Promise<{
   success: boolean

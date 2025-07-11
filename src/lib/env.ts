@@ -6,6 +6,7 @@ export const validateEnvironmentVariables = () => {
 
   const optionalEnvVars = [
     'NEXT_PUBLIC_N8N_WEBHOOK_URL',
+    'SUPABASE_SERVICE_ROLE_KEY',
   ] as const
 
   const missing: string[] = []
@@ -15,6 +16,7 @@ export const validateEnvironmentVariables = () => {
   console.log('Environment variables check:')
   console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT SET')
   console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET')
+  console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET')
   console.log('NEXT_PUBLIC_N8N_WEBHOOK_URL:', process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL ? 'SET' : 'NOT SET')
 
   // Check required variables
@@ -48,6 +50,7 @@ export const validateEnvironmentVariables = () => {
   return {
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321',
     supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key',
+    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     n8nWebhookUrl: process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL,
   }
 }
