@@ -2,7 +2,13 @@ import { createClient } from '@supabase/supabase-js'
 import { validateEnvironmentVariables } from '../env'
 
 const env = validateEnvironmentVariables()
-export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey)
+export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+})
 
 export const testSupabaseConnection = async (): Promise<{
   success: boolean

@@ -191,6 +191,11 @@ export async function updateStudent(
 
     console.log('Updating student with ID:', id)
     console.log('Update data:', updateData)
+    
+    // 認証状態を確認
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log('Current user:', user)
+    console.log('Auth error:', authError)
 
     // まず、学生が存在するか確認
     const { data: existingStudent, error: fetchError } = await supabase
@@ -223,34 +228,42 @@ export async function updateStudent(
       throw new Error('更新対象の生徒が見つかりません（RLS制限の可能性）')
     }
 
-    // 更新処理
-    const { data, error } = await supabase
+    // 更新処理（selectは使わない）
+    const { error } = await supabase
       .from('students')
       .update(updateData)
       .eq('id', id)
-      .select()
 
     if (error) {
       console.error('Update error:', error)
       throw error
     }
 
-    if (!data || data.length === 0) {
-      throw new Error('更新は成功しましたが、データが返されませんでした')
+    console.log('Update successful, fetching updated data...')
+
+    // 更新後のデータを別途取得
+    const { data: updatedData, error: fetchUpdatedError } = await supabase
+      .from('students')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (fetchUpdatedError || !updatedData) {
+      console.error('Failed to fetch updated data:', fetchUpdatedError)
+      throw new Error('更新は成功しましたが、更新後のデータ取得に失敗しました')
     }
 
-    // single()の代わりに配列の最初の要素を使用
-    const updatedStudent = data[0]
+    console.log('Updated student data:', updatedData)
 
     // データベースのsnake_caseをcamelCaseにマップ
     const mappedData = {
-      id: updatedStudent.id,
-      name: updatedStudent.name,
-      email: updatedStudent.email,
-      grade: updatedStudent.grade,
-      isActive: updatedStudent.is_active,
-      createdAt: updatedStudent.created_at,
-      updatedAt: updatedStudent.updated_at
+      id: updatedData.id,
+      name: updatedData.name,
+      email: updatedData.email,
+      grade: updatedData.grade,
+      isActive: updatedData.is_active,
+      createdAt: updatedData.created_at,
+      updatedAt: updatedData.updated_at
     }
 
     return {
