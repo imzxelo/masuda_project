@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Card, Button, Input } from '@/components/ui'
 import { useSupabaseAuth } from '@/components/SupabaseAuthProvider'
+import { createInstructorProfile } from '@/lib/api/instructor-profile'
 
 interface InstructorAuthProps {
   onAuthSuccess: () => void
@@ -42,6 +43,9 @@ export default function InstructorAuth({ onAuthSuccess }: InstructorAuthProps) {
           // サインアップ成功の場合、確認メールの案内を表示
           setError('')
           alert('確認メールを送信しました。メールを確認してアカウントを有効化してください。')
+          
+          // Note: 講師プロファイルの作成は、メール確認後にSupabaseAuthProviderで自動処理
+          // この時点ではまだuser.idが確定していないため
         }
       }
     } catch (err) {

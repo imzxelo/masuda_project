@@ -2,39 +2,29 @@
 
 import { useState } from 'react'
 import { Card, Button } from '@/components/ui'
-import InstructorSelect from '@/components/InstructorSelect'
 import StudentSelect from '@/components/StudentSelect'
 import { VideoRecordSelect } from '@/components/VideoRecordSelect'
 import { VideoRecordRegister } from '@/components/VideoRecordRegister'
 import EvaluationForm from '@/components/EvaluationForm'
-import { Instructor, Student } from '@/types'
+import { Student } from '@/types'
 import { VideoRecord } from '@/types/video-record'
-import { InstructorSession } from '@/types'
+import { InstructorProfile } from '@/lib/api/instructor-profile'
 
 interface EvaluationWorkflowProps {
-  instructors: Instructor[]
-  onInstructorSelect: (instructor: Instructor) => void
+  currentInstructor: InstructorProfile | null
   onLogout: () => void
-  session: InstructorSession | null
 }
 
-type WorkflowStep = 'instructor' | 'student' | 'video' | 'evaluation'
+type WorkflowStep = 'student' | 'video' | 'evaluation'
 
 export default function EvaluationWorkflow({
-  instructors,
-  onInstructorSelect,
-  onLogout,
-  session
+  currentInstructor,
+  onLogout
 }: EvaluationWorkflowProps) {
-  const [currentStep, setCurrentStep] = useState<WorkflowStep>(session ? 'student' : 'instructor')
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>('student')
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [selectedVideoRecord, setSelectedVideoRecord] = useState<VideoRecord | null>(null)
   const [showVideoRegisterForm, setShowVideoRegisterForm] = useState(false)
-
-  const handleInstructorSelect = (instructor: Instructor) => {
-    onInstructorSelect(instructor)
-    setCurrentStep('student')
-  }
 
   const handleStudentSelect = (student: Student) => {
     setSelectedStudent(student)
@@ -62,12 +52,8 @@ export default function EvaluationWorkflow({
   const handleBack = () => {
     switch (currentStep) {
       case 'student':
-        // 講師が認証済みの場合は生徒選択がスタートなので戻れない
-        if (session) {
-          return
-        }
-        setCurrentStep('instructor')
-        break
+        // 認証済みなので生徒選択がスタート - 戻れない
+        return
       case 'video':
         setCurrentStep('student')
         setSelectedStudent(null)
@@ -86,15 +72,11 @@ export default function EvaluationWorkflow({
   }
 
   const renderStepIndicator = () => {
-    const allSteps = [
-      { key: 'instructor', label: '講師選択', completed: session !== null },
+    const steps = [
       { key: 'student', label: '生徒選択', completed: selectedStudent !== null },
       { key: 'video', label: '動画選択', completed: selectedVideoRecord !== null },
       { key: 'evaluation', label: '評価入力', completed: false }
     ]
-    
-    // 講師が認証済みの場合は講師選択ステップを除外
-    const steps = session ? allSteps.slice(1) : allSteps
 
     return (
       <div className="flex items-center justify-center mb-8">
@@ -128,19 +110,6 @@ export default function EvaluationWorkflow({
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case 'instructor':
-        return (
-          <Card className="max-w-2xl mx-auto">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-center mb-6">講師を選択してください</h2>
-              <InstructorSelect 
-                instructors={instructors}
-                onSelect={handleInstructorSelect}
-              />
-            </div>
-          </Card>
-        )
-
       case 'student':
         return (
           <Card className="max-w-4xl mx-auto">
@@ -148,23 +117,13 @@ export default function EvaluationWorkflow({
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">評価対象の生徒を選択してください</h2>
                 <div className="text-sm text-gray-600">
-                  講師: {session?.name}
+                  講師: {currentInstructor?.name}
                 </div>
               </div>
               <StudentSelect 
                 onSelect={handleStudentSelect}
                 selectedStudent={selectedStudent}
               />
-              {!session && (
-                <div className="mt-6 text-center">
-                  <Button
-                    variant="outline"
-                    onClick={handleBack}
-                  >
-                    講師選択に戻る
-                  </Button>
-                </div>
-              )}
             </div>
           </Card>
         )
@@ -176,7 +135,7 @@ export default function EvaluationWorkflow({
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">採点対象の動画を選択してください</h2>
                 <div className="text-sm text-gray-600">
-                  講師: {session?.name} | 生徒: {selectedStudent?.name}
+                  講師: {currentInstructor?.name} | 生徒: {selectedStudent?.name}
                 </div>
               </div>
               
@@ -215,14 +174,14 @@ export default function EvaluationWorkflow({
               <div className="p-4 bg-blue-50 border-b">
                 <h2 className="text-xl font-bold text-blue-900">評価入力</h2>
                 <div className="text-sm text-blue-700 mt-1">
-                  講師: {session?.name} | 生徒: {selectedStudent?.name} | 楽曲: {selectedVideoRecord?.songTitle}
+                  講師: {currentInstructor?.name} | 生徒: {selectedStudent?.name} | 楽曲: {selectedVideoRecord?.songTitle}
                 </div>
               </div>
             </Card>
             
             <EvaluationForm
               studentId={selectedStudent!.id}
-              instructorId={session!.instructorId}
+              instructorId={currentInstructor!.id}
               videoRecordId={selectedVideoRecord!.id}
               onComplete={handleEvaluationComplete}
               onBack={handleBack}

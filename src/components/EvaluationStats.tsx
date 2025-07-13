@@ -7,12 +7,14 @@ import { getEvaluationStats } from '@/lib/api/evaluations'
 import { EvaluationStats as EvaluationStatsType, EvaluationFilters } from '@/types/evaluation'
 import { Student } from '@/types/student'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { InstructorProfile } from '@/lib/api/instructor-profile'
 
 interface EvaluationStatsProps {
+  currentInstructor: InstructorProfile | null
   className?: string
 }
 
-export default function EvaluationStats({ className = '' }: EvaluationStatsProps) {
+export default function EvaluationStats({ currentInstructor, className = '' }: EvaluationStatsProps) {
   const [stats, setStats] = useState<EvaluationStatsType | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

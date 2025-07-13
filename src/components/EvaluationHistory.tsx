@@ -8,12 +8,14 @@ import { EvaluationHistory as EvaluationHistoryType, EvaluationFilters } from '@
 import { Student } from '@/types/student'
 import { formatDate } from '@/lib/utils'
 import { ApiResponse } from '@/types/api'
+import { InstructorProfile } from '@/lib/api/instructor-profile'
 
 interface EvaluationHistoryProps {
+  currentInstructor: InstructorProfile | null
   className?: string
 }
 
-export default function EvaluationHistory({ className = '' }: EvaluationHistoryProps) {
+export default function EvaluationHistory({ currentInstructor, className = '' }: EvaluationHistoryProps) {
   const [evaluations, setEvaluations] = useState<EvaluationHistoryType[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

@@ -3,31 +3,52 @@
 import { useState } from 'react'
 import EvaluationHistory from '@/components/EvaluationHistory'
 import EvaluationStats from '@/components/EvaluationStats'
+import { Button } from '@/components/ui'
+import { useSupabaseAuth } from '@/components/SupabaseAuthProvider'
 
 export default function HistoryPage() {
   const [activeTab, setActiveTab] = useState<'history' | 'stats'>('history')
+  const { user, instructorProfile, signOut } = useSupabaseAuth()
+
+  const handleLogout = async () => {
+    await signOut()
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* ページヘッダー */}
         <div className="mb-8">
-          <div className="flex items-center space-x-6 mb-6">
-            <h1 className="text-3xl font-bold">評価システム</h1>
-            <nav className="flex space-x-4">
-              <a
-                href="/"
-                className="text-gray-600 hover:text-blue-600 font-medium"
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-6">
+              <h1 className="text-3xl font-bold">評価システム</h1>
+              <nav className="flex space-x-4">
+                <a
+                  href="/"
+                  className="text-gray-600 hover:text-blue-600 font-medium"
+                >
+                  評価入力
+                </a>
+                <a
+                  href="/history"
+                  className="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  評価履歴・統計
+                </a>
+              </nav>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-600">
+                講師: {instructorProfile?.name || user?.email}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
               >
-                評価入力
-              </a>
-              <a
-                href="/history"
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                評価履歴・統計
-              </a>
-            </nav>
+                ログアウト
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -59,9 +80,9 @@ export default function HistoryPage() {
 
         {/* コンテンツ */}
         {activeTab === 'history' ? (
-          <EvaluationHistory />
+          <EvaluationHistory currentInstructor={instructorProfile} />
         ) : (
-          <EvaluationStats />
+          <EvaluationStats currentInstructor={instructorProfile} />
         )}
       </div>
     </div>
