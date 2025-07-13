@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { Card, Button } from '@/components/ui'
+import StudentSelect from '@/components/StudentSelect'
 import { getEvaluationStats } from '@/lib/api/evaluations'
 import { EvaluationStats as EvaluationStatsType, EvaluationFilters } from '@/types/evaluation'
+import { Student } from '@/types/student'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
 
 interface EvaluationStatsProps {
@@ -12,23 +14,40 @@ interface EvaluationStatsProps {
 
 export default function EvaluationStats({ className = '' }: EvaluationStatsProps) {
   const [stats, setStats] = useState<EvaluationStatsType | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<EvaluationFilters>({})
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
 
   useEffect(() => {
-    loadEvaluationStats()
-  }, [filters])
+    if (selectedStudent) {
+      loadEvaluationStats()
+    }
+  }, [filters, selectedStudent])
+
+  const handleStudentSelect = (student: Student) => {
+    setSelectedStudent(student)
+    setFilters(prev => ({ ...prev, studentId: student.id }))
+  }
+
+  const handleStudentChange = () => {
+    setSelectedStudent(null)
+    setFilters(prev => ({ ...prev, studentId: undefined }))
+    setStats(null)
+  }
 
   const loadEvaluationStats = async () => {
+    if (!selectedStudent) return
+    
     try {
       setIsLoading(true)
       setError(null)
       
-      const result = await getEvaluationStats(filters)
+      const studentFilters = { ...filters, studentId: selectedStudent.id }
+      const result = await getEvaluationStats(studentFilters)
       
       if (result.success) {
-        setStats(result.data)
+        setStats(result.data || null)
       } else {
         throw new Error(result.error)
       }
@@ -58,6 +77,28 @@ export default function EvaluationStats({ className = '' }: EvaluationStatsProps
     })
   }
 
+  // 生徒が選択されていない場合
+  if (!selectedStudent) {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">評価統計</h2>
+        </div>
+        
+        <Card className="p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">生徒を選択してください</h3>
+          <p className="text-gray-600 mb-6">
+            評価統計を表示する生徒を選択してください。選択した生徒の統計データのみが表示されます。
+          </p>
+          <StudentSelect
+            onSelect={handleStudentSelect}
+            selectedStudent={selectedStudent}
+          />
+        </Card>
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center p-8 ${className}`}>
@@ -83,15 +124,29 @@ export default function EvaluationStats({ className = '' }: EvaluationStatsProps
   return (
     <div className={`space-y-6 ${className}`}>
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">評価統計</h2>
-        <Button
-          onClick={loadEvaluationStats}
-          variant="outline"
-          size="sm"
-          disabled={isLoading}
-        >
-          更新
-        </Button>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">評価統計</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            対象生徒: {selectedStudent.name}
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            onClick={handleStudentChange}
+            variant="outline"
+            size="sm"
+          >
+            生徒を変更
+          </Button>
+          <Button
+            onClick={loadEvaluationStats}
+            variant="outline"
+            size="sm"
+            disabled={isLoading}
+          >
+            更新
+          </Button>
+        </div>
       </div>
 
       {/* フィルター */}
