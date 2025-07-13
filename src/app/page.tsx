@@ -5,6 +5,7 @@ import EvaluationWorkflow from '@/components/EvaluationWorkflow'
 import InstructorRegister from '@/components/InstructorRegister'
 import { Card, Button, ToastProvider } from '@/components/ui'
 import { useInstructor } from '@/hooks'
+import { useSupabaseAuth } from '@/components/SupabaseAuthProvider'
 
 export default function Home() {
   const { 
@@ -15,6 +16,8 @@ export default function Home() {
     authenticate, 
     logout 
   } = useInstructor()
+  
+  const { user, signOut } = useSupabaseAuth()
   
   const [showRegisterForm, setShowRegisterForm] = useState(false)
   
@@ -33,7 +36,10 @@ export default function Home() {
     setShowRegisterForm(false)
   }
   
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Supabase Authからログアウト
+    await signOut()
+    // 既存の講師セッションもクリア
     logout()
   }
   
@@ -154,7 +160,9 @@ export default function Home() {
                 </nav>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600">講師: {session?.name}</p>
+                <p className="text-sm text-gray-600">
+                  講師: {user?.email || session?.name}
+                </p>
                 <Button
                   variant="outline"
                   size="sm"
