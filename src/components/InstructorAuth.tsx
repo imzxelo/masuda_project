@@ -36,7 +36,7 @@ export default function InstructorAuth({ onAuthSuccess }: InstructorAuthProps) {
         }
       } else {
         // サインアップ
-        const { error } = await signUp(email, password)
+        const { error } = await signUp(email, password, name.trim())
         if (error) {
           setError(error.message)
         } else {

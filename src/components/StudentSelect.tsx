@@ -35,14 +35,16 @@ export default function StudentSelect({ onSelect, selectedStudent, className = '
     loadStudents()
   }, [])
 
-  // Search students when query changes
+  // Search students when query changes (but not during IME composition)
   useEffect(() => {
+    if (isComposing) return
+    
     if (debouncedSearchQuery.trim()) {
       performSearch(debouncedSearchQuery.trim())
     } else {
       loadStudents()
     }
-  }, [debouncedSearchQuery])
+  }, [debouncedSearchQuery, isComposing])
 
   const loadStudents = async () => {
     try {

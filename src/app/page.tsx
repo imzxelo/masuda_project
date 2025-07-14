@@ -1,11 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import EvaluationWorkflow from '@/components/EvaluationWorkflow'
+import InstructorProfileEdit from '@/components/InstructorProfileEdit'
 import { Button, ToastProvider } from '@/components/ui'
 import { useSupabaseAuth } from '@/components/SupabaseAuthProvider'
 
 export default function Home() {
   const { user, instructorProfile, signOut } = useSupabaseAuth()
+  const [showProfileEdit, setShowProfileEdit] = useState(false)
   
   const handleLogout = async () => {
     await signOut()
@@ -39,15 +42,37 @@ export default function Home() {
                 <p className="text-sm text-gray-600">
                   講師: {instructorProfile?.name || user?.email}
                 </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLogout}
-                >
-                  ログアウト
-                </Button>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowProfileEdit(true)}
+                  >
+                    プロファイル編集
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLogout}
+                  >
+                    ログアウト
+                  </Button>
+                </div>
               </div>
             </div>
+
+            {showProfileEdit ? (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                  <h3 className="text-lg font-bold mb-4">プロファイル編集</h3>
+                  <InstructorProfileEdit
+                    isModal={true}
+                    onSave={() => setShowProfileEdit(false)}
+                    onCancel={() => setShowProfileEdit(false)}
+                  />
+                </div>
+              </div>
+            ) : null}
 
             <EvaluationWorkflow
               currentInstructor={instructorProfile}

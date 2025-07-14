@@ -1,4 +1,5 @@
 import { supabase, supabaseAdmin } from '@/lib/supabase/client'
+import { supabaseAuth } from '@/lib/supabase/auth-client'
 import { VideoRecord, VideoRecordInput, VideoRecordWithStats, VideoRecordListItem } from '@/types/video-record'
 import { ApiResponse } from '@/types/api'
 
@@ -46,7 +47,7 @@ export async function getVideoRecords(studentId?: string): Promise<ApiResponse<V
 
 export async function getVideoRecordById(id: string): Promise<ApiResponse<VideoRecord | null>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuth
       .from('video_records')
       .select('*')
       .eq('id', id)
@@ -90,7 +91,7 @@ export async function getVideoRecordWithStats(id: string): Promise<ApiResponse<V
     }
 
     // 評価統計を取得
-    const { data: evaluations, error: evalError } = await supabase
+    const { data: evaluations, error: evalError } = await supabaseAuth
       .from('evaluations_v2')
       .select('pitch, rhythm, expression, technique, created_at')
       .eq('video_record_id', id)
@@ -141,7 +142,7 @@ export async function getVideoRecordWithStats(id: string): Promise<ApiResponse<V
 
 export async function getVideoRecordsByStudent(studentId: string): Promise<ApiResponse<VideoRecordListItem[]>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuth
       .from('video_records')
       .select(`
         *,
@@ -193,7 +194,7 @@ export async function getVideoRecordsByStudent(studentId: string): Promise<ApiRe
 
 export async function createVideoRecord(videoRecord: VideoRecordInput): Promise<ApiResponse<VideoRecord>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuth
       .from('video_records')
       .insert({
         student_id: videoRecord.studentId,
@@ -319,7 +320,7 @@ export async function updateVideoRecord(
 
 export async function deleteVideoRecord(id: string): Promise<ApiResponse<void>> {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseAuth
       .from('video_records')
       .delete()
       .eq('id', id)
@@ -356,7 +357,7 @@ export async function searchVideoRecords(
       supabaseQuery = supabaseQuery.eq('student_id', studentId)
     }
 
-    const { data, error } = await supabaseQuery
+    const { data, error } = await supabaseAuthQuery
 
     if (error) {
       throw error

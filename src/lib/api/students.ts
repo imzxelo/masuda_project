@@ -1,10 +1,11 @@
 import { supabase, supabaseAdmin } from '@/lib/supabase/client'
+import { supabaseAuth } from '@/lib/supabase/auth-client'
 import { Student, StudentWithStats, StudentStats } from '@/types/student'
 import { ApiResponse } from '@/types/api'
 
 export async function getStudents(): Promise<ApiResponse<Student[]>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuth
       .from('students')
       .select('*')
       .eq('is_active', true)
@@ -41,7 +42,7 @@ export async function getStudents(): Promise<ApiResponse<Student[]>> {
 
 export async function getStudentById(id: string): Promise<ApiResponse<Student | null>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuth
       .from('students')
       .select('*')
       .eq('id', id)
@@ -74,7 +75,7 @@ export async function getStudentWithStats(id: string): Promise<ApiResponse<Stude
     }
 
     // Get evaluation stats
-    const { data: evaluations, error: evalError } = await supabase
+    const { data: evaluations, error: evalError } = await supabaseAuth
       .from('evaluations_v2')
       .select('pitch, rhythm, expression, technique, created_at')
       .eq('student_id', id)
@@ -137,7 +138,7 @@ export async function getStudentWithStats(id: string): Promise<ApiResponse<Stude
 
 export async function createStudent(student: Omit<Student, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Student>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuth
       .from('students')
       .insert({
         name: student.name,
@@ -264,7 +265,7 @@ export async function updateStudent(
 
 export async function searchStudents(query: string): Promise<ApiResponse<Student[]>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuth
       .from('students')
       .select('*')
       .eq('is_active', true)

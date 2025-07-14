@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
+import { supabaseAuth } from '@/lib/supabase/auth-client'
 import { 
   Evaluation, 
   EvaluationInput, 
@@ -92,7 +93,7 @@ export async function getEvaluations(filters?: EvaluationFilters): Promise<ApiRe
 
 export async function getEvaluationById(id: string): Promise<ApiResponse<Evaluation | null>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuth
       .from('evaluations_v2')
       .select(`
         *,
@@ -152,11 +153,18 @@ export async function createEvaluation(input: EvaluationInput): Promise<ApiRespo
   try {
     console.log('Creating evaluation with input:', input)
     
+    // 現在の認証ユーザーを取得
+    const { data: { user } } = await supabaseAuth.auth.getUser()
+    if (!user) {
+      throw new Error('認証が必要です')
+    }
+    
     // evaluations_v2テーブルの個別カラム構造に合わせてデータを準備
     const evaluationData = {
       student_id: input.studentId,
       instructor_id: input.instructorId,
-      // video_record_id: input.videoRecordId,
+      instructor_auth_user_id: user.id, // RLSポリシーのために必要
+      video_record_id: input.videoRecordId, // 重要: video_record_idを追加
       pitch: input.scores.pitch,
       rhythm: input.scores.rhythm,
       expression: input.scores.expression,
@@ -169,7 +177,7 @@ export async function createEvaluation(input: EvaluationInput): Promise<ApiRespo
 
     console.log('Sending evaluation data to evaluations_v2:', evaluationData)
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuth
       .from('evaluations_v2')
       .insert(evaluationData)
       .select(`
@@ -181,8 +189,29 @@ export async function createEvaluation(input: EvaluationInput): Promise<ApiRespo
       .single()
 
     if (error) {
-      console.error('Supabase error:', error)
+      console.error('Supabase insert error details:', {
+        error,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
       throw error
+    }
+
+    console.log('Supabase insert successful:', data)
+
+    // データが実際に保存されたか確認
+    const { data: verifyData, error: verifyError } = await supabaseAuth
+      .from('evaluations_v2')
+      .select('*')
+      .eq('id', data.id)
+      .single()
+    
+    if (verifyError) {
+      console.error('Verification query failed:', verifyError)
+    } else {
+      console.log('Verification: Data exists in database:', verifyData)
     }
 
     // レスポンスデータをフロントエンド形式にマッピング
@@ -251,7 +280,7 @@ export async function updateEvaluation(
     // updated_atを現在時刻に更新
     updateData.updated_at = new Date().toISOString()
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuth
       .from('evaluations_v2')
       .update(updateData)
       .eq('id', id)
@@ -310,7 +339,7 @@ export async function updateEvaluation(
 
 export async function deleteEvaluation(id: string): Promise<ApiResponse<void>> {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseAuth
       .from('evaluations_v2')
       .delete()
       .eq('id', id)
@@ -411,7 +440,7 @@ export async function getEvaluationSummary(
 export async function markEvaluationAsSent(id: string): Promise<ApiResponse<Evaluation>> {
   try {
     // sent_to_n8nフラグをtrueに設定し、送信日時を記録
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuth
       .from('evaluations_v2')
       .update({
         sent_to_n8n: true,
