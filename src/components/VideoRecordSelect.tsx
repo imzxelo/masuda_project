@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { useDebounce } from '@/hooks'
 import { VideoRecordEdit } from '@/components/VideoRecordEdit'
+import ReportGenerationStatus from './ReportGenerationStatus'
 
 interface VideoRecordSelectProps {
   studentId: string
@@ -251,6 +252,19 @@ export function VideoRecordSelect({
             </div>
           </div>
         </Card>
+      )}
+
+      {/* レポート生成状況 */}
+      {selectedVideoRecordId && (
+        <div className="mt-4">
+          <ReportGenerationStatus 
+            videoRecord={videoRecords.find(v => v.id === selectedVideoRecordId)!}
+            onReportGenerated={(report) => {
+              // レポート生成完了時の処理（オプション）
+              console.log('Report generated:', report)
+            }}
+          />
+        </div>
       )}
     </div>
   )

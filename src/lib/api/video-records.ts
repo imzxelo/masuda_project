@@ -61,6 +61,7 @@ export async function getVideoRecordById(id: string): Promise<ApiResponse<VideoR
     const mappedData = {
       id: data.id,
       studentId: data.student_id,
+      studentName: data.student_name,
       songId: data.song_id,
       songTitle: data.song_title,
       recordedAt: data.recorded_at,
@@ -194,10 +195,22 @@ export async function getVideoRecordsByStudent(studentId: string): Promise<ApiRe
 
 export async function createVideoRecord(videoRecord: VideoRecordInput): Promise<ApiResponse<VideoRecord>> {
   try {
+    // student_nameを取得するために生徒情報を取得
+    const { data: student, error: studentError } = await supabaseAuth
+      .from('students')
+      .select('name')
+      .eq('id', videoRecord.studentId)
+      .single()
+
+    if (studentError) {
+      throw new Error(`生徒情報の取得に失敗しました: ${studentError.message}`)
+    }
+
     const { data, error } = await supabaseAuth
       .from('video_records')
       .insert({
         student_id: videoRecord.studentId,
+        student_name: student.name, // student_nameを追加
         song_id: videoRecord.songId,
         song_title: videoRecord.songTitle,
         recorded_at: videoRecord.recordedAt
@@ -213,6 +226,7 @@ export async function createVideoRecord(videoRecord: VideoRecordInput): Promise<
     const mappedData = {
       id: data.id,
       studentId: data.student_id,
+      studentName: data.student_name,
       songId: data.song_id,
       songTitle: data.song_title,
       recordedAt: data.recorded_at,

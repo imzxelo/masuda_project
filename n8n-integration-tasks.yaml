@@ -1,0 +1,444 @@
+# n8n統合タスク詳細 - 戦略A完全Supabase統合
+
+## プロジェクト概要
+現在のGoogle Sheets基盤のn8nワークフローをSupabase完全統合型に移行する。
+10名の講師評価が揃った時点で自動レポート生成し、PDFをSupabase Storageに保存、UI で表示可能にする。
+
+## 前提条件
+- 現在のSinger's Challenge Frontend (Next.js + Supabase)が稼働中
+- n8nワークフローファイル: `___ (1).json` が存在  
+- Google Slides APIと OpenAI APIクレデンシャルが設定済み
+- Supabase プロジェクトが稼働中
+
+---
+
+## 🎯 あなたの担当タスク
+
+### Phase 1: 環境・認証準備 (Priority: HIGH)
+
+#### Task 1.1: Supabase Service Account設定
+```yaml
+目的: n8nからSupabaseへの認証アクセス設定
+手順:
+  1. Supabase Dashboard → Settings → API 
+  2. Service Role Keyをコピー (service_role キー)
+  3. n8n Environment Variables設定:
+     - SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+     - SUPABASE_SERVICE_KEY: ${service_role_key}
+     - SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+
+確認方法:
+  - n8nでHTTP Request ノード作成
+  - URL: ${SUPABASE_URL}/rest/v1/students
+  - Headers: 
+      Authorization: Bearer ${SUPABASE_SERVICE_KEY}
+      apikey: ${SUPABASE_SERVICE_KEY}
+  - テスト実行して200レスポンス確認
+```
+
+#### Task 1.2: Supabase Storage バケット作成
+```yaml
+目的: PDF保存用のStorageバケット準備
+手順:
+  1. Supabase Dashboard → Storage
+  2. 新しいバケット作成:
+     - バケット名: "evaluation-reports"  
+     - Public: false (認証必須)
+     - File size limit: 50MB
+     - Allowed MIME types: "application/pdf"
+  3. RLSポリシー設定:
+     - authenticated users can upload
+     - authenticated users can read own files
+
+設定例:
+```sql
+-- バケット用RLSポリシー
+CREATE POLICY "Authenticated users can upload reports" ON storage.objects 
+FOR INSERT TO authenticated 
+WITH CHECK (bucket_id = 'evaluation-reports');
+
+CREATE POLICY "Authenticated users can read reports" ON storage.objects 
+FOR SELECT TO authenticated 
+USING (bucket_id = 'evaluation-reports');
+```
+
+確認方法:
+  - テストファイルアップロードが成功することを確認
+```
+
+### Phase 2: ワークフロー修正 (Priority: HIGH)
+
+#### Task 2.1: データ取得部分をSupabase APIに変更
+```yaml
+目的: Google Sheets読み取りをSupabase API取得に変更
+
+現在のコード位置:
+  - ノード名: "Google Sheets1" (line 397-435)
+  - 現在: Google Sheetsから songId でフィルタリング
+  - 変更後: Supabase APIから evaluations_v2 テーブルクエリ
+
+新しいHTTP Requestノード設定:
+  name: "Get Evaluations from Supabase"
+  method: GET
+  url: "={{ $json.env.SUPABASE_URL }}/rest/v1/evaluations_v2"
+  query_parameters:
+    - video_record_id: "eq.{{ $('Webhook /summarize').item.json.body.videoRecordId }}"
+    - select: "*,students:student_id(name),instructors:instructor_id(name),video_records:video_record_id(song_id,song_title)"
+  headers:
+    Authorization: "Bearer {{ $json.env.SUPABASE_SERVICE_KEY }}"
+    apikey: "{{ $json.env.SUPABASE_SERVICE_KEY }}"
+    Content-Type: "application/json"
+
+期待するレスポンス形式:
+```json
+[
+  {
+    "id": "uuid",
+    "pitch": 8,
+    "rhythm": 7,
+    "expression": 9,
+    "technique": 8,
+    "pitch_comment": "素晴らしい音程感覚",
+    "rhythm_comment": "リズムが安定している",
+    "expression_comment": "感情豊かな表現",
+    "technique_comment": "テクニックが向上している",
+    "students": {"name": "田中太郎"},
+    "instructors": {"name": "山田講師"},
+    "video_records": {"song_id": "song_001", "song_title": "君の名は"}
+  }
+]
+```
+```
+
+#### Task 2.2: 10件チェックロジック修正
+```yaml
+目的: Supabaseから取得したデータで10件判定
+
+現在のコード位置:
+  - ノード名: "If" (line 437-470)
+  - 現在: $items().length で判定
+
+修正内容:
+  条件式変更:
+    現在: "={{ $items().length }}" equals "10"
+    変更後: "={{ $items().length }}" equals "10"
+  
+※データ構造が変わるが、チェックロジックは同じ
+
+確認ポイント:
+  - 評価件数が10件未満の場合は処理停止
+  - 10件ちょうどの場合のみ次の処理に進む
+```
+
+#### Task 2.3: データ書き込み部分を削除
+```yaml
+目的: Google Sheetsへの書き込み処理を削除
+
+削除対象ノード:
+  - ノード名: "Google Sheets" (line 243-394)
+  - 役割: 評価データをSpreadsheetに追記
+
+理由:
+  - 評価データは既にSupabaseのevaluations_v2に保存済み
+  - フロントエンドから送信時点で保存完了
+  - 重複保存を避けるため削除
+
+代替処理:
+  - なし（削除のみ）
+  - Webhook受信後、直接 "Get Evaluations from Supabase" に接続
+```
+
+### Phase 3: PDF保存先変更 (Priority: HIGH)
+
+#### Task 3.1: PDF生成後の処理変更
+```yaml
+目的: Google DriveからSupabase Storageに保存先変更
+
+現在のコード位置:
+  - ノード名: "PDF" (line 178-211)
+  - 現在出力: pdfBinary プロパティにPDFデータ
+
+新しいSupabase Storage アップロードノード追加:
+  name: "Upload PDF to Supabase Storage"
+  position: PDF ノードの直後
+  type: "HTTP Request"
+  method: POST
+  url: "{{ $json.env.SUPABASE_URL }}/storage/v1/object/evaluation-reports/{{ $('Webhook /summarize').item.json.body.videoRecordId }}_report.pdf"
+  
+設定詳細:
+  headers:
+    Authorization: "Bearer {{ $json.env.SUPABASE_SERVICE_KEY }}"
+    Content-Type: "application/pdf"
+  body_type: "binary"
+  body: "={{ $('PDF').item.binary.pdfBinary.data }}"
+
+期待するレスポンス:
+```json
+{
+  "Key": "evaluation-reports/uuid_report.pdf",
+  "ETag": "etag-value"
+}
+```
+```
+
+#### Task 3.2: レポート管理レコード作成
+```yaml
+目的: report_generations テーブルにレポート完了記録
+
+新しいHTTP Requestノード追加:
+  name: "Update Report Status"
+  position: Upload PDF の直後
+  method: POST
+  url: "{{ $json.env.SUPABASE_URL }}/rest/v1/report_generations"
+  
+body:
+```json
+{
+  "video_record_id": "{{ $('Webhook /summarize').item.json.body.videoRecordId }}",
+  "student_id": "{{ $('Get Evaluations from Supabase').item.json[0].student_id }}",
+  "song_id": "{{ $('Get Evaluations from Supabase').item.json[0].video_records.song_id }}",
+  "song_title": "{{ $('Get Evaluations from Supabase').item.json[0].video_records.song_title }}",
+  "status": "completed",
+  "total_evaluations": "{{ $('Get Evaluations from Supabase').items.length }}",
+  "ai_analysis_data": "{{ $('Edit Fields1').item.json }}",
+  "pdf_url": "{{ $json.env.SUPABASE_URL }}/storage/v1/object/evaluation-reports/{{ $('Webhook /summarize').item.json.body.videoRecordId }}_report.pdf",
+  "pdf_file_name": "{{ $('Webhook /summarize').item.json.body.videoRecordId }}_report.pdf",
+  "completed_at": "{{ $now() }}"
+}
+```
+
+headers:
+  Authorization: "Bearer {{ $json.env.SUPABASE_SERVICE_KEY }}"
+  apikey: "{{ $json.env.SUPABASE_SERVICE_KEY }}"
+  Content-Type: "application/json"
+```
+
+### Phase 4: エラーハンドリング強化 (Priority: MEDIUM)
+
+#### Task 4.1: 失敗時のレポート記録
+```yaml
+目的: エラー発生時もreport_generationsに記録
+
+各主要ノードにError Workflow設定:
+  1. "Get Evaluations from Supabase"
+  2. "Upload PDF to Supabase Storage" 
+  3. AI処理ノード群
+
+Error Workflowの処理:
+  name: "Log Error to Database"
+  type: "HTTP Request"
+  method: POST
+  url: "{{ $json.env.SUPABASE_URL }}/rest/v1/report_generations"
+  
+body:
+```json
+{
+  "video_record_id": "{{ $('Webhook /summarize').item.json.body.videoRecordId }}",
+  "status": "failed", 
+  "error_message": "{{ $json.error.message }}",
+  "total_evaluations": "{{ $('Get Evaluations from Supabase').items.length || 0 }}"
+}
+```
+```
+
+#### Task 4.2: レスポンス形式統一
+```yaml
+目的: 成功・失敗時のレスポンス形式を統一
+
+現在のコード位置:
+  - ノード名: "Edit Fields" (line 228-241)
+
+修正内容:
+```json
+{
+  "status": "success", // または "failed"
+  "report_id": "{{ $('Update Report Status').item.json.id }}",
+  "pdf_url": "{{ $json.env.SUPABASE_URL }}/storage/v1/object/evaluation-reports/{{ $('Webhook /summarize').item.json.body.videoRecordId }}_report.pdf",
+  "video_record_id": "{{ $('Webhook /summarize').item.json.body.videoRecordId }}",
+  "message": "PDF generated and saved successfully"
+}
+```
+```
+
+### Phase 5: テスト・デバッグ (Priority: HIGH)
+
+#### Task 5.1: 単体テスト
+```yaml
+目的: 各ノードの動作確認
+
+テスト手順:
+  1. Webhook テスト:
+     - Manual trigger でWebhook起動
+     - body例:
+```json
+{
+  "videoRecordId": "existing-video-record-id",
+  "studentId": "existing-student-id"
+}
+```
+
+  2. Supabase接続テスト:
+     - "Get Evaluations from Supabase" 単体実行
+     - 期待: 10件のevaluationデータ取得
+
+  3. PDF生成テスト:
+     - AI処理チェーン単体実行
+     - PDF生成確認
+
+  4. Storage アップロードテスト:
+     - PDF→Supabase Storage 成功確認
+     - File URLアクセス可能確認
+
+確認ポイント:
+  - 各ステップでエラーログなし
+  - データ形式が期待通り
+  - ファイルが正しく保存される
+```
+
+#### Task 5.2: 統合テスト
+```yaml
+目的: エンド・トゥ・エンドテスト
+
+前提条件:
+  - Supabaseに10件の評価データが存在
+  - 同一video_record_idで10名分のevaluation
+
+テストシナリオ:
+  1. フロントエンドから10件目の評価送信
+  2. Webhook自動起動確認
+  3. レポート生成プロセス完了確認
+  4. PDF生成・保存確認
+  5. UI からレポート表示確認
+
+成功基準:
+  - エラーなくワークフロー完了
+  - PDFが正しくStorage保存
+  - report_generationsにcompleted記録
+  - フロントエンドでPDF表示可能
+```
+
+---
+
+## 🔧 技術的詳細・注意点
+
+### Supabase API仕様
+```yaml
+認証方式:
+  - Service Role Key使用（RLS無視）
+  - Header: Authorization: Bearer ${SERVICE_ROLE_KEY}
+  - Header: apikey: ${SERVICE_ROLE_KEY}
+
+クエリパラメータ:
+  - フィルタ: column=eq.value, column=gt.value
+  - ソート: order=column.asc, order=column.desc  
+  - 関連データ: select=*,table:foreign_key(columns)
+  - 件数制限: limit=10
+
+レスポンス形式:
+  - 成功: HTTP 200/201 + JSON data
+  - エラー: HTTP 4xx/5xx + error message
+```
+
+### エラーパターンと対処法
+```yaml
+よくあるエラー:
+  1. "JWT expired" → Service Role Key確認
+  2. "Row Level Security" → Service Role使用確認
+  3. "relation does not exist" → テーブル名確認
+  4. "column does not exist" → カラム名確認
+  5. "storage bucket not found" → バケット作成確認
+
+デバッグ方法:
+  1. n8n実行ログ確認
+  2. Supabase Dashboard > API Logs確認
+  3. HTTP Request の Raw Response確認
+  4. Webhook テスト実行
+```
+
+### パフォーマンス最適化
+```yaml
+考慮点:
+  1. API レスポンス時間: 10秒以内
+  2. PDF生成時間: 30秒以内
+  3. Storage アップロード: 5秒以内
+  4. 同時実行制御: Queue使用推奨
+
+最適化策:
+  - 不要なselect項目削除
+  - AI処理の並列化
+  - PDF Template最適化
+  - Storage アップロードのチャンク化
+```
+
+---
+
+## 📋 チェックリスト
+
+### 完了確認項目
+```yaml
+Phase 1:
+  - [ ] Supabase Service Role Key設定完了
+  - [ ] evaluation-reports バケット作成完了
+  - [ ] Storage RLSポリシー設定完了
+  - [ ] 接続テスト成功
+
+Phase 2:  
+  - [ ] Google Sheets読み取りをSupabase API変更完了
+  - [ ] 10件チェックロジック動作確認
+  - [ ] Google Sheets書き込み削除完了
+  - [ ] データフロー正常動作確認
+
+Phase 3:
+  - [ ] PDF Storage アップロード実装完了  
+  - [ ] report_generations レコード作成実装完了
+  - [ ] PDF URL生成確認
+  - [ ] アップロードテスト成功
+
+Phase 4:
+  - [ ] エラーハンドリング実装完了
+  - [ ] 失敗時のDB記録実装完了
+  - [ ] レスポンス形式統一完了
+
+Phase 5:
+  - [ ] 全ノード単体テスト完了
+  - [ ] エンド・トゥ・エンド統合テスト完了
+  - [ ] エラーケーステスト完了
+  - [ ] パフォーマンステスト完了
+```
+
+### 最終成果物
+```yaml
+修正されたn8nワークフローファイル:
+  - Google Sheets依存削除
+  - Supabase完全統合
+  - PDF Storage保存機能
+  - エラーハンドリング強化
+
+動作確認済み機能:
+  - 10件評価自動検知
+  - AI分析処理継続
+  - PDF生成・保存
+  - フロントエンド連携準備完了
+```
+
+---
+
+## 🤝 連携・相談ポイント
+
+### 私（AI）との連携が必要な場面
+```yaml
+以下の場合は必ず相談:
+  1. Supabaseスキーマ・API仕様不明時
+  2. フロントエンド連携データ形式確認時  
+  3. エラー解決困難時
+  4. パフォーマンス問題発生時
+  5. テスト結果確認時
+
+相談時に共有してほしい情報:
+  - n8n実行ログ（エラー部分）
+  - Supabase API レスポンス  
+  - 修正したワークフロー JSON
+  - テスト結果（成功/失敗パターン）
+```
+
+これらのタスクを順番に実行することで、Google Sheets依存から完全にSupabase統合されたワークフローに移行できます。不明点や問題が発生した際は、具体的なエラーメッセージと実行状況を共有してください。

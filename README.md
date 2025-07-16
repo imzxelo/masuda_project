@@ -1,182 +1,140 @@
 # Singer's Challenge Frontend
 
-ボーカルスクール向けの採点・フィードバックシステムのフロントエンド
+ボーカルスクール向けの採点・フィードバックシステム（完全版）
 
-## 概要
+## 🎯 プロジェクト概要
 
-Singer's Challengeは、ボーカルスクールの講師が生徒のパフォーマンスを評価し、自動的にレポートを生成するシステムです。10名の講師が以下の4項目で評価を行います：
+Singer's Challengeは、ボーカルスクールの講師が生徒のパフォーマンスを評価し、自動的にレポートを生成する包括的なシステムです。10名の講師が4項目で評価を行い、n8nとの連携により自動レポート生成を実現します。
 
-- 音程 (Pitch) - 0-10点
-- リズム (Rhythm) - 0-10点
-- 表現 (Expression) - 0-10点
-- テクニック (Technique) - 0-10点
+### 評価システム
+- **音程 (Pitch)** - 0-10点
+- **リズム (Rhythm)** - 0-10点  
+- **表現 (Expression)** - 0-10点
+- **テクニック (Technique)** - 0-10点
 
-**評価システム**: 4項目 × 10点 × 10名講師 = 400点満点
+**総合評価**: 4項目 × 10点 × 10名講師 = 最大400点
 
-## 技術スタック
+## 🚀 実装状況（Phase 6 完了）
 
+### ✅ 完全実装済み機能
+
+#### 🔐 認証・セキュリティシステム
+- **2段階認証システム**
+  - 共有パスワード認証（`myUU-2025`）
+  - Supabase Auth による講師認証（メール・パスワード）
+- **セッション永続化**
+  - SessionStorage による状態保持
+  - ページ間移動での認証状態維持
+- **自動プロファイル管理**
+  - 新規講師登録時の自動プロファイル作成
+  - 初回セットアップフロー
+  - プロファイル編集機能
+
+#### 📊 評価システム（完全動作）
+- **包括的評価フロー**
+  - 生徒選択（検索・フィルタリング付き）
+  - 動画レコード選択（楽曲・日付管理）
+  - 4項目スコアリング（0-10点スライダー）
+  - 項目別コメント入力
+  - リアルタイムレーダーチャート表示
+- **データ管理**
+  - Supabase PostgreSQL による完全なCRUD操作
+  - Row Level Security (RLS) 対応
+  - リアルタイム同期
+
+#### 🗄️ データ管理・履歴機能
+- **評価履歴表示**
+  - 生徒別評価履歴の表示
+  - 詳細フィルタリング（日付範囲等）
+  - 評価詳細の展開表示
+- **統計・分析ダッシュボード**
+  - 総評価数、平均スコアの表示
+  - カテゴリ別平均スコア可視化
+  - 日別評価数推移グラフ
+  - 楽曲別パフォーマンス分析
+
+#### 🎵 動画レコード管理
+- **楽曲管理システム**
+  - 楽曲ID・タイトル・録音日付の管理
+  - 生徒別楽曲履歴
+  - 検索・フィルタリング機能
+
+#### 🔗 外部システム連携
+- **n8n Webhook 統合**
+  - 評価完了時の自動レポート生成
+  - リトライ機能付きエラーハンドリング
+  - 開発環境での動作シミュレーション
+
+#### 💅 ユーザーエクスペリエンス
+- **レスポンシブデザイン**
+  - Tailwind CSS による モダンUI
+  - モバイル・タブレット対応
+- **リアルタイムフィードバック**
+  - Toast通知システム
+  - ローディング状態表示
+  - エラーハンドリング
+
+## 🛠️ 技術スタック
+
+### フロントエンド
 - **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript 5.3
-- **Database**: Supabase (PostgreSQL)
+- **Language**: TypeScript 5.5
 - **Styling**: Tailwind CSS 3.4
-- **Charts**: Recharts
-- **State Management**: Zustand
+- **State Management**: Zustand 4.5
+- **Charts**: Recharts 2.12
+- **UI Components**: カスタムコンポーネントライブラリ
 
-## 開発環境のセットアップ
+### バックエンド・データベース
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Real-time**: Supabase Real-time subscriptions
+- **Security**: Row Level Security (RLS)
 
-1. 依存関係をインストール
+### 外部連携
+- **Automation**: n8n Webhook integration
+- **Report Generation**: 自動レポート生成システム
+
+### 開発ツール
+- **Type Checking**: TypeScript
+- **Linting**: ESLint
+- **CSS Processing**: PostCSS
+- **Package Manager**: npm
+
+## 📋 セットアップガイド
+
+### 1. 環境構築
+
 ```bash
+# リポジトリのクローン
+git clone <repository-url>
+cd masuda_project
+
+# 依存関係のインストール
 npm install
-```
 
-2. 環境変数を設定
-```bash
+# 環境変数ファイルの作成
 cp .env.local.example .env.local
 ```
 
-3. `.env.local` ファイルを編集し、必要な環境変数を設定
+### 2. 環境変数の設定
+
+`.env.local` ファイルを編集：
+
 ```bash
 # Supabase設定（必須）
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # n8n Webhook設定（オプション）
 NEXT_PUBLIC_N8N_WEBHOOK_URL=your_n8n_webhook_url
 ```
 
-4. 開発サーバーを起動
-```bash
-npm run dev
-```
+### 3. データベースセットアップ
 
-5. 接続テストを実行
-```bash
-# ブラウザで以下にアクセス
-http://localhost:3000/test
-```
+Supabase Dashboard の SQL Editor で以下のスキーマを実行：
 
-## 環境変数
-
-- `NEXT_PUBLIC_SUPABASE_URL`: SupabaseプロジェクトのURL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabaseの匿名キー
-- `N8N_WEBHOOK_URL`: n8n WebhookのURL
-
-## スクリプト
-
-- `npm run dev`: 開発サーバーを起動
-- `npm run build`: プロダクションビルド
-- `npm run start`: プロダクションサーバーを起動
-- `npm run lint`: ESLintでコードをチェック
-- `npm run type-check`: TypeScriptの型チェック
-
-## プロジェクト構造
-
-```
-src/
-├── app/              # Next.js App Router
-├── components/       # 再利用可能なコンポーネント
-├── lib/             # ユーティリティ関数
-│   ├── api/         # API関連
-│   └── supabase/    # Supabase設定
-├── hooks/           # カスタムフック
-└── types/           # TypeScript型定義
-```
-
-## 主要機能
-
-- 📊 講師向け採点入力UI（10点満点スライダー）
-- 📝 評価項目ごとのコメント入力機能
-- 📈 リアルタイムレーダーチャート表示
-- 🗄️ Supabaseとのデータ連携
-- 🔄 n8nへの自動データ送信とレポート生成
-- 📱 レスポンシブデザイン
-- 👥 10名講師の認証・選択システム
-- 🎵 採点対象動画レコード管理
-- 🔍 検索型選択UI（講師・生徒）
-- ✅ 登録内容確認機能
-- ✏️ 情報編集機能
-
-## 🚀 現在の実装状況
-
-### ✅ 完了済み (Phase 1-4)
-- **基盤構築**: プロジェクト構造、設定ファイル、型定義
-- **コアコンポーネント**: レーダーチャート、評価スライダー、講師認証、共通UI
-- **状態管理**: Zustand stores (評価、講師、生徒、UI状態)
-- **API連携**: Supabase CRUD操作、n8n webhook送信
-- **環境構築**: 開発環境、接続テスト、デバッグ機能
-- **登録機能**: システム内での講師・生徒登録機能
-- **生徒選択機能**: 検索・フィルタリング付き生徒選択
-- **評価システム**: 完全動作する評価入力・保存・送信
-
-### 🎯 システム完成度
-**コア機能**: 100% 完成 ✅
-- 講師認証・選択
-- 生徒選択（検索・フィルタリング）
-- 評価入力（4項目 × 10点 + コメント）
-- リアルタイムレーダーチャート
-- データベース保存（evaluations_v2テーブル）
-- n8nレポート生成連携
-
-### 🚧 実装中 (Phase 5)
-- **採点対象動画レコード管理**: 生徒の歌唱動画を管理・選択する機能
-- **検索型選択UI**: 講師・生徒をtype-ahead形式で検索・選択
-- **登録内容確認画面**: 新規登録時の確認フロー
-- **編集機能**: 登録済み情報の編集・更新機能
-
-### 📋 次のステップ (Phase 6以降)
-- **評価履歴表示**: 過去の評価データの表示・管理・可視化
-- **レポート管理**: n8nからのレポート生成結果確認・ダウンロード機能
-- **統計ダッシュボード**: 講師・生徒別の評価統計・トレンド分析
-- **エラーハンドリング強化**: 本番環境対応・監視・ログ機能
-- **パフォーマンス最適化**: キャッシュ・遅延読み込み・バッチ処理
-
-## 評価システム詳細
-
-### 評価項目とコメント機能
-各評価項目に対して以下の機能を提供：
-
-1. **スライダー評価（0-10点）**
-   - 音程：ピッチの正確性
-   - リズム：テンポとビートの正確性
-   - 表現：感情表現とダイナミクス
-   - テクニック：発声技術と技巧
-
-2. **項目別コメント機能**
-   - 各評価項目に対する詳細なフィードバック
-   - 自由記述形式でのコメント入力
-   - レポート生成時のコメント活用
-
-3. **統合評価**
-   - 4項目の合計評価（最大40点/講師）
-   - 10名講師による総合評価（最大400点）
-   - リアルタイムでの評価結果可視化
-
-## 📋 システム利用開始手順
-
-### 1. 初回セットアップ
-
-**環境変数の設定:**
-```bash
-cp .env.local.example .env.local
-```
-
-`.env.local`に以下を設定:
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_N8N_WEBHOOK_URL=your_n8n_webhook_url
-```
-
-**開発サーバー起動:**
-```bash
-npm install
-npm run dev
-```
-
-### 2. データベースセットアップ
-
-**必要なテーブル作成:**
-Supabase Dashboard → SQL Editor で以下を実行:
+#### テーブル作成
 
 ```sql
 -- 講師テーブル
@@ -184,8 +142,10 @@ CREATE TABLE instructors (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
+  auth_user_id UUID UNIQUE REFERENCES auth.users(id),
   is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 生徒テーブル
@@ -193,12 +153,13 @@ CREATE TABLE students (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT UNIQUE,
-  grade TEXT,
+  notes TEXT, -- 旧grade フィールドから変更
   is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 採点対象動画レコードテーブル
+-- 動画レコードテーブル
 CREATE TABLE video_records (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   student_id UUID REFERENCES students(id) NOT NULL,
@@ -209,11 +170,12 @@ CREATE TABLE video_records (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 評価テーブル（v2 - 個別カラム構造）
+-- 評価テーブル（個別カラム構造）
 CREATE TABLE evaluations_v2 (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   student_id UUID REFERENCES students(id) NOT NULL,
   instructor_id UUID REFERENCES instructors(id) NOT NULL,
+  instructor_auth_user_id UUID REFERENCES auth.users(id) NOT NULL,
   video_record_id UUID REFERENCES video_records(id) NOT NULL,
   pitch INTEGER CHECK (pitch BETWEEN 0 AND 10) NOT NULL,
   rhythm INTEGER CHECK (rhythm BETWEEN 0 AND 10) NOT NULL,
@@ -224,147 +186,285 @@ CREATE TABLE evaluations_v2 (
   expression_comment TEXT,
   technique_comment TEXT,
   sent_to_n8n BOOLEAN DEFAULT false,
+  sent_to_n8n_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
 
-**Row Level Security (RLS) ポリシーの設定:**
+#### RLS ポリシー設定
+
 ```sql
--- 各テーブルにRLSポリシーを設定
-CREATE POLICY "Allow anonymous access on instructors" ON instructors FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "Allow anonymous access on students" ON students FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "Allow anonymous access on video_records" ON video_records FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "Allow anonymous access on evaluations_v2" ON evaluations_v2 FOR ALL TO anon USING (true) WITH CHECK (true);
+-- RLS有効化
+ALTER TABLE instructors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE video_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE evaluations_v2 ENABLE ROW LEVEL SECURITY;
+
+-- ポリシー作成（認証済みユーザーアクセス）
+CREATE POLICY "Allow authenticated access" ON instructors FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow authenticated access" ON students FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow authenticated access" ON video_records FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow authenticated access" ON evaluations_v2 FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- 評価テーブル: 講師は自分の評価のみアクセス可能
+CREATE POLICY "Instructors can only access their own evaluations" ON evaluations_v2 
+FOR ALL TO authenticated 
+USING (instructor_auth_user_id = auth.uid()) 
+WITH CHECK (instructor_auth_user_id = auth.uid());
 ```
 
-### 3. 講師・生徒登録
+### 4. 開発サーバー起動
 
-**システム内で簡単登録:**
-
-システムにアクセス後、以下の手順で登録:
-
-1. **講師登録**: 
-   - `http://localhost:3000/`でトップページにアクセス
-   - 「新しい講師を登録」ボタンをクリック
-   - 名前とメールアドレスを入力して登録
-   - 登録後、講師を選択してシステムにログイン
-
-2. **生徒登録**: 
-   - 講師でログイン後、生徒選択画面で「新しい生徒を登録」ボタンをクリック
-   - 名前、メールアドレス（任意）、学年（任意）を入力して登録
-   - 登録後、すぐに評価対象として選択可能
-
-3. **動画レコード登録**:
-   - 生徒選択後、「新しい動画レコードを登録」ボタンをクリック
-   - 楽曲ID、楽曲タイトル、録音日付を入力して登録
-   - 登録後、すぐに評価対象として選択可能
-
-### 4. システム利用
-
-**評価の流れ:**
-1. 講師を選択してシステムにログイン
-2. 評価対象の生徒を選択
-3. 生徒の採点対象動画を選択（楽曲・録音日付）
-4. 4項目（音程・リズム・表現・テクニック）を10点満点で評価
-5. 各項目にコメントを入力（任意）
-6. 「評価を送信」でデータベースに保存
-7. 自動的にn8nへWebhook送信でレポート生成開始
-
-## 🛠️ 開発環境とテスト
-
-### 接続テスト
-システムの接続状況を確認:
 ```bash
-# 開発サーバー起動後
-http://localhost:3000/test
+# 開発サーバー起動
+npm run dev
+
+# 接続テスト
+# ブラウザで http://localhost:3000/test にアクセス
 ```
 
-### 主要なエンドポイント
-- **メインページ**: `http://localhost:3000/` - 評価システムのメイン画面
-- **テストページ**: `http://localhost:3000/test` - 接続テストとデバッグ
+## 🏗️ プロジェクト構造
+
+```
+src/
+├── app/                      # Next.js App Router
+│   ├── globals.css          # グローバルスタイル
+│   ├── layout.tsx           # ルートレイアウト
+│   ├── page.tsx             # メイン評価画面
+│   ├── history/             # 履歴・統計画面
+│   │   └── page.tsx
+│   └── test/                # 接続テスト
+│       └── page.tsx
+├── components/               # UIコンポーネント
+│   ├── AuthWrapper.tsx      # 認証フロー管理
+│   ├── SupabaseAuthProvider.tsx # 認証プロバイダー
+│   ├── EvaluationWorkflow.tsx   # 評価ワークフロー
+│   ├── EvaluationForm.tsx       # 評価入力フォーム
+│   ├── EvaluationHistory.tsx    # 評価履歴表示
+│   ├── EvaluationStats.tsx      # 統計ダッシュボード
+│   ├── StudentSelect.tsx        # 生徒選択コンポーネント
+│   ├── InstructorProfileEdit.tsx # プロファイル編集
+│   ├── FirstTimeSetup.tsx       # 初回セットアップ
+│   └── ui/                      # 基本UIコンポーネント
+├── lib/                     # ユーティリティ・設定
+│   ├── api/                 # API関数
+│   │   ├── students.ts
+│   │   ├── instructors.ts
+│   │   ├── evaluations.ts
+│   │   ├── video-records.ts
+│   │   └── instructor-profile.ts
+│   ├── supabase/            # Supabase設定
+│   │   ├── client.ts
+│   │   └── auth-client.ts
+│   └── utils.ts             # ユーティリティ関数
+├── hooks/                   # カスタムフック
+│   ├── useSharedAuth.ts     # 共有認証フック
+│   └── useEvaluation.ts     # 評価管理フック
+├── stores/                  # Zustand状態管理
+│   ├── useEvaluationStore.ts
+│   ├── useInstructorStore.ts
+│   ├── useStudentStore.ts
+│   └── useUIStore.ts
+└── types/                   # TypeScript型定義
+    ├── api.ts
+    ├── student.ts
+    ├── instructor.ts
+    ├── evaluation.ts
+    └── video-record.ts
+```
+
+## 🔧 利用開始手順
+
+### 1. システムアクセス
+
+1. `http://localhost:3000` にアクセス
+2. 共有パスワード `myUU-2025` を入力
+3. 講師アカウントでサインアップ/サインイン
+
+### 2. 初回セットアップ
+
+新規講師登録時：
+1. メールアドレス・パスワードでサインアップ
+2. 講師名の設定（初回セットアップ画面）
+3. プロファイル情報の確認・編集
+
+### 3. 生徒・楽曲の登録
+
+評価開始前に必要なデータを登録：
+
+#### 生徒登録
+1. 生徒選択画面で「新しい生徒を登録」
+2. 名前、メールアドレス（任意）、メモを入力
+3. 登録完了後、即座に選択可能
+
+#### 動画レコード登録
+1. 生徒選択後、「新しい動画レコードを登録」
+2. 楽曲ID、楽曲タイトル、録音日付を入力
+3. 登録完了後、評価対象として選択可能
+
+### 4. 評価実行
+
+1. **生徒選択**: 検索・フィルタリングで対象生徒を選択
+2. **楽曲選択**: 評価対象の動画レコードを選択
+3. **評価入力**: 4項目をスライダーで評価（0-10点）
+4. **コメント入力**: 各項目に詳細コメントを記入（任意）
+5. **確認・送信**: 評価内容を確認してデータベースに保存
+6. **自動連携**: n8nへの自動送信でレポート生成開始
+
+### 5. 履歴・統計の確認
+
+1. 「評価履歴・統計」タブに移動
+2. **評価履歴**: 過去の評価データの詳細確認
+3. **統計・分析**: 生徒のパフォーマンス分析・トレンド表示
+
+## 🔍 主要機能詳細
+
+### 認証システム
+- **2段階セキュリティ**: 共有パスワード + 個人認証
+- **自動プロファイル管理**: 新規ユーザーの自動セットアップ
+- **セッション永続化**: ページ遷移での状態保持
+
+### 評価システム
+- **包括的ワークフロー**: 生徒選択→楽曲選択→評価→送信
+- **リアルタイム可視化**: レーダーチャートでの即座フィードバック
+- **項目別コメント**: 4評価項目それぞれに詳細コメント
+
+### データ管理
+- **完全CRUD操作**: 全エンティティの作成・読取・更新・削除
+- **高度な検索**: 部分一致・フィルタリング機能
+- **リアルタイム同期**: Supabaseによるデータ同期
+
+### 統計・分析
+- **包括的ダッシュボード**: 総評価数、平均スコア、トレンド分析
+- **可視化**: Rechartsによる豊富なグラフ表示
+- **詳細フィルタリング**: 日付範囲、生徒別等の絞り込み
+
+## 📊 npm スクリプト
+
+```bash
+# 開発
+npm run dev          # 開発サーバー起動 (http://localhost:3000)
+npm run build        # プロダクションビルド
+npm run start        # プロダクションサーバー起動
+
+# コード品質
+npm run lint         # ESLintによるコードチェック
+npm run type-check   # TypeScript型チェック
+```
 
 ## 🔧 トラブルシューティング
 
 ### よくある問題と解決方法
 
-**問題**: 講師・生徒登録時に「new row violates row-level security policy」エラー
-→ **解決**: 上記RLSポリシーを設定してください
+#### 1. 認証エラー
+**問題**: ログイン後に認証状態が保持されない
+**解決**: 
+- SessionStorage をクリア（開発者ツール → Application → Storage）
+- ページをリフレッシュ
+- 環境変数 `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_ANON_KEY` を確認
 
-**問題**: 接続テストでエラーが発生
-→ **解決**: 環境変数の設定を確認し、Supabaseプロジェクトの設定を見直してください
+#### 2. RLS (Row Level Security) エラー
+**問題**: "new row violates row-level security policy" エラー
+**解決**:
+- 上記データベースセットアップのRLSポリシーを実行
+- Supabase Dashboard でポリシーが正しく適用されているか確認
 
-**問題**: n8n Webhookでエラーが発生
-→ **解決**: 開発環境では自動的にシミュレート処理されます。本番環境のWebhook URLを確認してください
+#### 3. 評価送信エラー
+**問題**: 評価データが保存されない
+**解決**:
+- ブラウザのコンソールでエラーメッセージを確認
+- `instructor_auth_user_id` が正しく設定されているか確認
+- データベースの外部キー制約を確認
 
-### 技術仕様
+#### 4. n8n Webhook エラー
+**問題**: レポート生成が失敗する
+**解決**:
+- 開発環境では自動的にシミュレート処理
+- 本番環境では `NEXT_PUBLIC_N8N_WEBHOOK_URL` を確認
+- n8nワークフローの稼働状況を確認
 
-- **データベース**: PostgreSQL (Supabase)
-  - `instructors` テーブル: 講師情報
-  - `students` テーブル: 生徒情報  
-  - `video_records` テーブル: 採点対象動画レコード
-  - `evaluations_v2` テーブル: 評価データ（個別カラム構造）
-- **状態管理**: Zustand with persistence
-- **API層**: Supabase Client with TypeScript
-- **UI**: Tailwind CSS + Recharts
-- **外部連携**: n8n Webhook for report generation
+### デバッグ手順
 
-## 🎵 採点対象動画レコード管理
+1. **接続テスト実行**
+```bash
+# ブラウザで以下にアクセス
+http://localhost:3000/test
+```
 
-### 機能概要
-生徒が歌った楽曲の録音データを管理し、評価対象として選択できる機能です。
+2. **ブラウザ開発者ツール**
+- Console: エラーメッセージの確認
+- Network: API通信の状況確認
+- Application: LocalStorage/SessionStorageの状態確認
 
-### 動画レコード構造
-- **楽曲ID**: 楽曲を識別するID
-- **楽曲タイトル**: 楽曲の名称
-- **録音日付**: 録音した日付
-- **生徒との関連**: 特定の生徒に紐づけられた動画レコード
+3. **Supabase ダッシュボード**
+- Table Editor: データの直接確認
+- Authentication: ユーザー登録状況の確認
+- API Logs: データベースアクセスログの確認
 
-### 利用シーン
-1. 生徒が複数の楽曲を録音している場合
-2. 同じ楽曲を複数回録音している場合
-3. 日付別に評価を管理したい場合
+## 🚀 本番環境デプロイ
 
-## 🔍 検索型選択UI
+### Vercel デプロイ
 
-### 機能概要
-講師選択と生徒選択において、type-ahead（先行入力）形式での検索・選択機能を提供します。
+```bash
+# Vercel CLI インストール
+npm i -g vercel
 
-### 検索機能
-- **部分一致検索**: 苗字、名前、メールアドレスでの検索
-- **リアルタイム検索**: 入力と同時に候補を絞り込み
-- **デバウンス機能**: 検索パフォーマンスの最適化
+# プロジェクトをデプロイ
+vercel
 
-### UI仕様
-- 入力フィールドでの検索
-- ドロップダウンでの候補表示
-- キーボード操作対応（矢印キー、Enter）
+# 環境変数を設定
+vercel env add NEXT_PUBLIC_SUPABASE_URL
+vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
+vercel env add SUPABASE_SERVICE_ROLE_KEY
+vercel env add NEXT_PUBLIC_N8N_WEBHOOK_URL
 
-## ✅ 登録内容確認機能
+# 再デプロイ
+vercel --prod
+```
 
-### 機能概要
-新規登録時に入力内容を確認できる確認画面を表示します。
+### 環境変数チェックリスト
 
-### 確認対象
-- 講師登録内容
-- 生徒登録内容
-- 動画レコード登録内容
+- [ ] `NEXT_PUBLIC_SUPABASE_URL` - Supabase プロジェクトURL
+- [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase 匿名キー
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` - Supabase サービスロールキー
+- [ ] `NEXT_PUBLIC_N8N_WEBHOOK_URL` - n8n Webhook URL（任意）
 
-### 確認画面構成
-- 入力内容の表示
-- 修正ボタン（前の画面に戻る）
-- 確定ボタン（登録実行）
+## 📈 システム運用
 
-## ✏️ 編集機能
+### 監視・ログ
+- Supabase ダッシュボードでのデータベース監視
+- Vercel Analytics でのパフォーマンス監視
+- ブラウザコンソールでのフロントエンドエラー監視
 
-### 機能概要
-登録済みの情報を後から編集・更新できる機能です。
+### バックアップ
+- Supabase による自動データベースバックアップ
+- 定期的な手動データエクスポート推奨
 
-### 編集対象
-- 生徒情報の編集
-- 動画レコード情報の編集
+### スケーリング
+- Supabase の自動スケーリング機能
+- CDN によるグローバル配信（Vercel）
 
-### 編集画面構成
-- 既存情報の表示
-- 編集フォーム
-- 保存・キャンセル機能
+## 🤝 貢献・開発
+
+### コードスタイル
+- TypeScript strict mode
+- ESLint + Prettier による自動フォーマット
+- 2スペースインデント
+- 関数コンポーネントのみ使用
+
+### 開発ワークフロー
+1. 機能ブランチで開発: `feature/[機能名]`
+2. TypeScript型安全性の確保
+3. コミットメッセージ: `feat:`, `fix:`, `docs:` プレフィックス使用
+4. PR マージ前のテスト必須
+
+## 📝 ライセンス
+
+プライベートプロジェクト - 無断転載・配布禁止
+
+---
+
+**🎵 Singer's Challenge - ボーカルスクールの未来を創る評価システム**
+
+*Powered by Next.js, Supabase, and n8n*

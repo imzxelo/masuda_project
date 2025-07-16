@@ -1,15 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import EvaluationHistory from '@/components/EvaluationHistory'
-import EvaluationStats from '@/components/EvaluationStats'
-import InstructorProfileEdit from '@/components/InstructorProfileEdit'
 import { Button, ToastProvider } from '@/components/ui'
 import { useSupabaseAuth } from '@/components/SupabaseAuthProvider'
+import InstructorProfileEdit from '@/components/InstructorProfileEdit'
+import PDFCreationWorkflow from '@/components/PDFCreationWorkflow'
 
-export default function HistoryPage() {
+export default function PDFCreationPage() {
   const { user, instructorProfile, signOut } = useSupabaseAuth()
-  const [activeTab, setActiveTab] = useState<'history' | 'stats'>('history')
   const [showProfileEdit, setShowProfileEdit] = useState(false)
   
   const handleLogout = async () => {
@@ -35,7 +33,7 @@ export default function HistoryPage() {
                     href="/history"
                     className="text-blue-600 hover:text-blue-800 font-medium"
                   >
-                    評価履歴・統計
+                    PDF作成
                   </a>
                 </nav>
               </div>
@@ -75,38 +73,8 @@ export default function HistoryPage() {
               </div>
             ) : null}
 
-            {/* タブナビゲーション */}
-            <div className="mb-8">
-              <nav className="flex space-x-8">
-                <button
-                  onClick={() => setActiveTab('history')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'history'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  評価履歴
-                </button>
-                <button
-                  onClick={() => setActiveTab('stats')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'stats'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  統計・分析
-                </button>
-              </nav>
-            </div>
-
-            {/* コンテンツ */}
-            {activeTab === 'history' ? (
-              <EvaluationHistory currentInstructor={instructorProfile} />
-            ) : (
-              <EvaluationStats currentInstructor={instructorProfile} />
-            )}
+            {/* PDFCreationWorkflow メインコンテンツ */}
+            <PDFCreationWorkflow />
           </div>
         </div>
       </main>
