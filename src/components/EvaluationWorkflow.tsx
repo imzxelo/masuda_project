@@ -88,7 +88,7 @@ export default function EvaluationWorkflow({
                   ? 'bg-green-500 text-white'
                   : step.key === currentStep
                   ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-600'
+                  : 'bg-gray-200 text-gray-800'
               }`}
             >
               {step.completed ? (
@@ -116,7 +116,7 @@ export default function EvaluationWorkflow({
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">評価対象の生徒を選択してください</h2>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted">
                   講師: {currentInstructor?.name}
                 </div>
               </div>
@@ -134,7 +134,7 @@ export default function EvaluationWorkflow({
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">採点対象の動画を選択してください</h2>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted">
                   講師: {currentInstructor?.name} | 生徒: {selectedStudent?.name}
                 </div>
               </div>

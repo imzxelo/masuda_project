@@ -85,25 +85,25 @@ export default function EvaluationForm({
             <div className="grid grid-cols-4 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-blue-600">{scores.pitch}</div>
-                <div className="text-sm text-gray-600">音程</div>
+                <div className="text-sm text-gray-800">音程</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-600">{scores.rhythm}</div>
-                <div className="text-sm text-gray-600">リズム</div>
+                <div className="text-sm text-gray-800">リズム</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-yellow-600">{scores.expression}</div>
-                <div className="text-sm text-gray-600">表現</div>
+                <div className="text-sm text-gray-800">表現</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-red-600">{scores.technique}</div>
-                <div className="text-sm text-gray-600">テクニック</div>
+                <div className="text-sm text-gray-800">テクニック</div>
               </div>
             </div>
             
             <div className="text-center">
               <div className="text-3xl font-bold text-gray-900">{getTotalScore()}/40</div>
-              <div className="text-sm text-gray-600">総合スコア</div>
+              <div className="text-sm text-gray-800">総合スコア</div>
             </div>
           </div>
 
@@ -202,7 +202,7 @@ export default function EvaluationForm({
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{getTotalScore()}/40</div>
-              <div className="text-sm text-gray-600">総合スコア</div>
+              <div className="text-sm text-gray-800">総合スコア</div>
             </div>
           </div>
         </Card>
@@ -215,28 +215,28 @@ export default function EvaluationForm({
                 <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
                 <div>
                   <div className="font-medium text-gray-900">音程</div>
-                  <div className="text-gray-600">ピッチの正確性、音程の安定性</div>
+                  <div className="text-gray-800">ピッチの正確性、音程の安定性</div>
                 </div>
               </div>
               <div className="flex items-start space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
                 <div>
                   <div className="font-medium text-gray-900">リズム</div>
-                  <div className="text-gray-600">テンポの正確性、ビート感</div>
+                  <div className="text-gray-800">テンポの正確性、ビート感</div>
                 </div>
               </div>
               <div className="flex items-start space-x-2">
                 <div className="w-2 h-2 bg-yellow-500 rounded-full mt-1.5 flex-shrink-0"></div>
                 <div>
                   <div className="font-medium text-gray-900">表現</div>
-                  <div className="text-gray-600">感情表現、ダイナミクス</div>
+                  <div className="text-gray-800">感情表現、ダイナミクス</div>
                 </div>
               </div>
               <div className="flex items-start space-x-2">
                 <div className="w-2 h-2 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
                 <div>
                   <div className="font-medium text-gray-900">テクニック</div>
-                  <div className="text-gray-600">発声技術、歌唱技巧</div>
+                  <div className="text-gray-800">発声技術、歌唱技巧</div>
                 </div>
               </div>
             </div>

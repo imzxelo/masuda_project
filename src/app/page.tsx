@@ -22,7 +22,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center space-x-6">
-                <h1 className="text-3xl font-bold">評価システム</h1>
+                <h1 className="text-3xl font-bold text-gray-900">評価システム</h1>
                 <nav className="flex space-x-4">
                   <a
                     href="/"
@@ -32,14 +32,14 @@ export default function Home() {
                   </a>
                   <a
                     href="/history"
-                    className="text-gray-600 hover:text-blue-600 font-medium"
+                    className="text-gray-800 hover:text-blue-600 font-medium"
                   >
                     評価履歴・統計
                   </a>
                 </nav>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted">
                   講師: {instructorProfile?.name || user?.email}
                 </p>
                 <div className="flex space-x-2">

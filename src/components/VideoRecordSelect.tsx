@@ -8,6 +8,8 @@ import Card from '@/components/ui/Card'
 import { useDebounce } from '@/hooks'
 import { VideoRecordEdit } from '@/components/VideoRecordEdit'
 import ReportGenerationStatus from './ReportGenerationStatus'
+import { useSupabaseAuth } from '@/components/SupabaseAuthProvider'
+import { supabaseAuth } from '@/lib/supabase/auth-client'
 
 interface VideoRecordSelectProps {
   studentId: string
@@ -26,7 +28,9 @@ export function VideoRecordSelect({
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingVideoRecord, setEditingVideoRecord] = useState<VideoRecord | null>(null)
+  const [evaluationHistory, setEvaluationHistory] = useState<{[key: string]: boolean}>({})
   
+  const { instructorProfile } = useSupabaseAuth()
   const { 
     videoRecords, 
     isLoading, 
@@ -51,6 +55,41 @@ export function VideoRecordSelect({
       loadVideoRecordsByStudent(studentId)
     }
   }, [debouncedSearchQuery, studentId, searchVideoRecords, loadVideoRecordsByStudent])
+
+  // 講師の評価履歴を取得
+  useEffect(() => {
+    if (videoRecords.length > 0 && instructorProfile?.id) {
+      checkEvaluationHistory()
+    }
+  }, [videoRecords, instructorProfile?.id])
+
+  const checkEvaluationHistory = async () => {
+    if (!instructorProfile?.id) return
+
+    try {
+      const videoRecordIds = videoRecords.map(record => record.id)
+      
+      const { data: evaluations, error } = await supabaseAuth
+        .from('evaluations_v2')
+        .select('video_record_id')
+        .eq('instructor_id', instructorProfile.id)
+        .in('video_record_id', videoRecordIds)
+
+      if (error) {
+        console.error('Error checking evaluation history:', error)
+        return
+      }
+
+      const historyMap: {[key: string]: boolean} = {}
+      evaluations?.forEach(evaluation => {
+        historyMap[evaluation.video_record_id] = true
+      })
+
+      setEvaluationHistory(historyMap)
+    } catch (error) {
+      console.error('Error checking evaluation history:', error)
+    }
+  }
 
   const handleVideoRecordSelect = (videoRecord: VideoRecord) => {
     selectVideoRecord(videoRecord)
@@ -98,7 +137,7 @@ export function VideoRecordSelect({
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">動画レコードを読み込み中...</span>
+        <span className="ml-2 text-muted">動画レコードを読み込み中...</span>
       </div>
     )
   }
@@ -204,10 +243,21 @@ export function VideoRecordSelect({
                 <div className="mt-3 flex items-center justify-between text-sm text-gray-500">
                   <span>録音日: {formatDate(videoRecord.recordedAt)}</span>
                   <div className="flex items-center space-x-2">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    <span className="text-xs">評価待ち</span>
+                    {evaluationHistory[videoRecord.id] ? (
+                      <>
+                        <svg className="h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-xs text-green-600">採点済み</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <span className="text-xs">評価待ち</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

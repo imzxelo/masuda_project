@@ -262,7 +262,7 @@ export default function PDFCreationWorkflow() {
             {isLoading && (
               <div className="text-center py-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-gray-600 mt-2">検索中...</p>
+                <p className="text-muted mt-2">検索中...</p>
               </div>
             )}
 
@@ -308,7 +308,7 @@ export default function PDFCreationWorkflow() {
           {isLoading && (
             <div className="text-center py-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-gray-600 mt-2">動画レコードを読み込み中...</p>
+              <p className="text-muted mt-2">動画レコードを読み込み中...</p>
             </div>
           )}
 
@@ -405,7 +405,7 @@ export default function PDFCreationWorkflow() {
             </div>
 
             {evaluationCount < 10 && (
-              <div className="text-center text-sm text-gray-500">
+              <div className="text-center text-sm text-muted">
                 PDFを生成するには10件の評価が必要です。
                 現在{10 - evaluationCount}件不足しています。
               </div>

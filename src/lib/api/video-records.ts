@@ -24,6 +24,7 @@ export async function getVideoRecords(studentId?: string): Promise<ApiResponse<V
     const mappedData = (data || []).map(item => ({
       id: item.id,
       studentId: item.student_id,
+      studentName: item.student_name,
       songId: item.song_id,
       songTitle: item.song_title,
       recordedAt: item.recorded_at,
@@ -311,6 +312,7 @@ export async function updateVideoRecord(
     const mappedData = {
       id: updatedData.id,
       studentId: updatedData.student_id,
+      studentName: updatedData.student_name,
       songId: updatedData.song_id,
       songTitle: updatedData.song_title,
       recordedAt: updatedData.recorded_at,
@@ -371,7 +373,7 @@ export async function searchVideoRecords(
       supabaseQuery = supabaseQuery.eq('student_id', studentId)
     }
 
-    const { data, error } = await supabaseAuthQuery
+    const { data, error } = await supabaseQuery
 
     if (error) {
       throw error
@@ -381,6 +383,7 @@ export async function searchVideoRecords(
     const mappedData = (data || []).map(item => ({
       id: item.id,
       studentId: item.student_id,
+      studentName: item.student_name,
       songId: item.song_id,
       songTitle: item.song_title,
       recordedAt: item.recorded_at,

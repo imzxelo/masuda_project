@@ -4,7 +4,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #000000;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -15,14 +15,64 @@
 }
 
 body {
-  color: var(--foreground);
+  color: #000000 !important;
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-weight: 500 !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* 基本的なテキストの色を強制的に設定 */
+* {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* 主要なテキスト要素の色を適切に設定 */
+h1, h2, h3, h4, h5, h6 {
+  color: #111827 !important; /* gray-900 */
+  font-weight: 600 !important;
+}
+
+p, span, div, label, input, textarea, button {
+  color: #374151 !important; /* gray-700 */
+}
+
+/* 薄い文字が必要な場合のクラス */
+.text-muted {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+/* 成功メッセージ */
+.text-green-600, .text-green-700, .text-green-800 {
+  color: #059669 !important; /* green-600 */
+}
+
+/* エラーメッセージ */
+.text-red-600, .text-red-700, .text-red-800 {
+  color: #dc2626 !important; /* red-600 */
+}
+
+/* 青色のテキスト */
+.text-blue-600, .text-blue-700, .text-blue-800 {
+  color: #2563eb !important; /* blue-600 */
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* テキストをより濃くするためのユーティリティ */
+  .text-dark {
+    color: #000000 !important;
+  }
+  
+  .text-bold {
+    font-weight: 600 !important;
   }
 }
 
