@@ -143,22 +143,29 @@ export default function PDFCreationWorkflow() {
 
     while (attempts < maxAttempts) {
       try {
+        console.log(`Polling attempt ${attempts + 1}/${maxAttempts} for report ${reportId}`)
         const response = await fetch(`/api/reports/${reportId}`)
         if (response.ok) {
           const report = await response.json()
+          console.log('Report status:', report.status, 'PDF URL:', report.pdf_url)
+          
           if (report.status === 'completed' && report.pdf_url) {
+            console.log('PDF generation completed! Setting URL:', report.pdf_url)
             setGeneratedPDFUrl(report.pdf_url)
             return
           } else if (report.status === 'failed') {
             throw new Error(report.error_message || 'PDF生成に失敗しました')
           }
+          console.log(`Status is still "${report.status}", continuing to poll...`)
+        } else {
+          console.error('Failed to fetch report status:', response.status, response.statusText)
         }
       } catch (error) {
         console.error('Status check error:', error)
       }
 
       attempts++
-      await new Promise(resolve => setTimeout(resolve, 10000)) // 10秒待機
+      await new Promise(resolve => setTimeout(resolve, 5000)) // 5秒待機（短縮）
     }
 
     throw new Error('PDF生成がタイムアウトしました')
@@ -407,16 +414,80 @@ export default function PDFCreationWorkflow() {
             {/* PDF生成完了 */}
             {generatedPDFUrl && (
               <Card className="p-4 bg-green-50 border-green-200">
-                <div className="text-center">
+                <div className="text-center space-y-4">
                   <div className="text-green-800 font-medium mb-2">
-                    PDF生成が完了しました！
+                    🎉 PDF生成が完了しました！
                   </div>
-                  <Button
-                    onClick={() => window.open(generatedPDFUrl, '_blank')}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    PDFをダウンロード
-                  </Button>
+                  
+                  <div className="flex justify-center space-x-4">
+                    <Button
+                      onClick={() => window.open(generatedPDFUrl, '_blank')}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      📄 PDFをダウンロード
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const iframe = document.createElement('iframe')
+                        iframe.src = generatedPDFUrl
+                        iframe.style.width = '100%'
+                        iframe.style.height = '600px'
+                        iframe.style.border = 'none'
+                        
+                        const modal = document.createElement('div')
+                        modal.style.position = 'fixed'
+                        modal.style.top = '0'
+                        modal.style.left = '0'
+                        modal.style.width = '100%'
+                        modal.style.height = '100%'
+                        modal.style.backgroundColor = 'rgba(0,0,0,0.8)'
+                        modal.style.zIndex = '9999'
+                        modal.style.display = 'flex'
+                        modal.style.alignItems = 'center'
+                        modal.style.justifyContent = 'center'
+                        modal.style.padding = '20px'
+                        
+                        const container = document.createElement('div')
+                        container.style.backgroundColor = 'white'
+                        container.style.borderRadius = '8px'
+                        container.style.padding = '20px'
+                        container.style.width = '90%'
+                        container.style.maxWidth = '800px'
+                        container.style.height = '80%'
+                        container.style.position = 'relative'
+                        
+                        const closeButton = document.createElement('button')
+                        closeButton.textContent = '✕ 閉じる'
+                        closeButton.style.position = 'absolute'
+                        closeButton.style.top = '10px'
+                        closeButton.style.right = '10px'
+                        closeButton.style.padding = '8px 16px'
+                        closeButton.style.backgroundColor = '#ef4444'
+                        closeButton.style.color = 'white'
+                        closeButton.style.border = 'none'
+                        closeButton.style.borderRadius = '4px'
+                        closeButton.style.cursor = 'pointer'
+                        closeButton.onclick = () => document.body.removeChild(modal)
+                        
+                        container.appendChild(closeButton)
+                        container.appendChild(iframe)
+                        modal.appendChild(container)
+                        document.body.appendChild(modal)
+                        
+                        modal.onclick = (e) => {
+                          if (e.target === modal) document.body.removeChild(modal)
+                        }
+                      }}
+                    >
+                      👁️ プレビュー
+                    </Button>
+                  </div>
+                  
+                  <div className="text-sm text-green-600">
+                    ファイル: {selectedVideoRecord.songTitle}_評価レポート.pdf
+                  </div>
                 </div>
               </Card>
             )}

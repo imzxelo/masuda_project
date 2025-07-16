@@ -38,6 +38,8 @@ export async function GET(
       .eq('id', id)
       .single()
 
+    console.log('Database query result:', { data: report, error })
+
     if (error) {
       console.error('Error fetching report:', error)
       if (error.code === 'PGRST116') {
@@ -46,7 +48,13 @@ export async function GET(
       throw error
     }
 
-    console.log('Report status fetched:', { id: report.id, status: report.status })
+    console.log('Report details:', { 
+      id: report.id, 
+      status: report.status, 
+      pdf_url: report.pdf_url,
+      completed_at: report.completed_at,
+      created_at: report.created_at 
+    })
     return NextResponse.json(report)
 
   } catch (error) {
